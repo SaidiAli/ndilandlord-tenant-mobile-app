@@ -1,6 +1,18 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { secureStorage } from './storage';
-import { ApiResponse, AuthResponse, LoginRequest, LoginRequestBackend, User } from '../types';
+import { 
+  ApiResponse, 
+  AuthResponse, 
+  LoginRequest, 
+  LoginRequestBackend, 
+  User,
+  PaymentBalance,
+  PaymentInitiationRequest,
+  PaymentInitiationResponse,
+  PaymentStatusResponse,
+  PaymentReceipt,
+  PaymentWithDetails
+} from '../types';
 
 import { Platform } from 'react-native';
 
@@ -118,6 +130,131 @@ export const authApi = {
   },
 };
 
+// Payment API functions
+export const paymentApi = {
+  /**
+   * Get payment balance for a specific lease
+   */
+  getBalance: async (leaseId: string): Promise<PaymentBalance> => {
+    try {
+      const response = await api.get<ApiResponse<PaymentBalance>>(`/payments/lease/${leaseId}/balance`);
+      
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || 'Failed to get payment balance');
+      }
+      
+      return response.data.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        throw new Error('Lease not found');
+      }
+      throw new Error(error.message || 'Failed to get payment balance');
+    }
+  },
+
+  /**
+   * Get payment history for a specific lease
+   */
+  getHistory: async (leaseId: string): Promise<PaymentWithDetails[]> => {
+    try {
+      const response = await api.get<ApiResponse<PaymentWithDetails[]>>(`/payments/lease/${leaseId}/history`);
+      
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || 'Failed to get payment history');
+      }
+      
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to get payment history');
+    }
+  },
+
+  /**
+   * Initiate a payment
+   */
+  initiate: async (paymentData: PaymentInitiationRequest): Promise<PaymentInitiationResponse> => {
+    try {
+      const response = await api.post<ApiResponse<PaymentInitiationResponse>>('/payments/initiate', paymentData);
+      
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || response.data.message || 'Failed to initiate payment');
+      }
+      
+      return response.data.data;
+    } catch (error: any) {
+      if (error.response?.status === 400) {
+        const errorMessage = error.response.data?.message || error.response.data?.error;
+        throw new Error(errorMessage || 'Invalid payment data');
+      }
+      throw new Error(error.message || 'Failed to initiate payment');
+    }
+  },
+
+  /**
+   * Get payment status
+   */
+  getStatus: async (transactionId: string): Promise<PaymentStatusResponse> => {
+    try {
+      const response = await api.get<ApiResponse<PaymentStatusResponse>>(`/payments/status/${transactionId}`);
+      
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || 'Failed to get payment status');
+      }
+      
+      return response.data.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        throw new Error('Transaction not found');
+      }
+      throw new Error(error.message || 'Failed to get payment status');
+    }
+  },
+
+  /**
+   * Get payment receipt
+   */
+  getReceipt: async (paymentId: string): Promise<PaymentReceipt> => {
+    try {
+      const response = await api.get<ApiResponse<PaymentReceipt>>(`/payments/${paymentId}/receipt`);
+      
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || 'Failed to get receipt');
+      }
+      
+      return response.data.data;
+    } catch (error: any) {
+      if (error.response?.status === 400) {
+        throw new Error('Receipt only available for completed payments');
+      } else if (error.response?.status === 404) {
+        throw new Error('Payment not found');
+      }
+      throw new Error(error.message || 'Failed to get receipt');
+    }
+  },
+
+  /**
+   * Get all payments (for tenant)
+   */
+  getAll: async (filters?: { status?: string; limit?: number; offset?: number }): Promise<PaymentWithDetails[]> => {
+    try {
+      const params = new URLSearchParams();
+      if (filters?.status) params.append('status', filters.status);
+      if (filters?.limit) params.append('limit', filters.limit.toString());
+      if (filters?.offset) params.append('offset', filters.offset.toString());
+
+      const response = await api.get<ApiResponse<PaymentWithDetails[]>>(`/payments?${params.toString()}`);
+      
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || 'Failed to get payments');
+      }
+      
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to get payments');
+    }
+  },
+};
+
 // Tenant-specific API functions
 export const tenantApi = {
   getDashboard: async () => {
@@ -131,13 +268,11 @@ export const tenantApi = {
   },
 
   getPayments: async () => {
-    const response = await api.get('/payments');
-    return response.data;
+    return paymentApi.getAll();
   },
 
-  makePayment: async (paymentData: any) => {
-    const response = await api.post('/payments', paymentData);
-    return response.data;
+  makePayment: async (paymentData: PaymentInitiationRequest) => {
+    return paymentApi.initiate(paymentData);
   },
 
   getMaintenanceRequests: async () => {

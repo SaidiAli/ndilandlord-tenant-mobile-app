@@ -126,3 +126,112 @@ export interface TenantDashboard {
   maintenanceRequests: MaintenanceRequest[];
   propertyInfo?: Property & { unit: Unit };
 }
+
+// Payment System Types
+export interface PaymentBalance {
+  leaseId: string;
+  monthlyRent: number;
+  paidAmount: number;
+  outstandingBalance: number;
+  minimumPayment: number;
+  dueDate: string;
+  isOverdue: boolean;
+  nextPaymentDue?: string;
+}
+
+export interface PaymentInitiationRequest {
+  leaseId: string;
+  amount: number;
+  phoneNumber?: string;
+  paymentMethod?: 'mobile_money';
+}
+
+export interface PaymentInitiationResponse {
+  paymentId: string;
+  transactionId: string;
+  amount: number;
+  status: 'pending' | 'processing';
+  estimatedCompletion: string;
+  iotecReference: string;
+  leaseId: string;
+  statusMessage: string;
+}
+
+export interface PaymentStatusResponse {
+  transactionId: string;
+  status: 'Pending' | 'Success' | 'Failed';
+  statusMessage: string;
+  amount: number;
+  processedAt?: string;
+  vendorTransactionId?: string;
+}
+
+export interface PaymentReceipt {
+  receiptNumber: string;
+  paymentId: string;
+  transactionId: string;
+  amount: number;
+  currency: 'UGX';
+  paymentMethod: string;
+  paidDate: string;
+  tenant: {
+    name: string;
+    email: string;
+    phone: string;
+  } | null;
+  lease: {
+    id: string;
+    monthlyRent: number;
+    startDate: string;
+    endDate: string;
+  } | null;
+  generatedAt: string;
+  companyInfo: {
+    name: string;
+    address: string;
+    email: string;
+    phone: string;
+  };
+}
+
+export interface PaymentWithDetails {
+  payment: Payment;
+  lease: Lease;
+  tenant: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  };
+}
+
+// Mobile Money Types
+export interface MobileMoneyProvider {
+  id: 'mtn' | 'airtel';
+  name: string;
+  displayName: string;
+  color: string;
+  icon: string;
+  prefixes: string[];
+}
+
+// Payment Flow Types
+export type PaymentStep = 
+  | 'amount-selection'
+  | 'payment-method'
+  | 'confirmation'
+  | 'pin-entry'
+  | 'processing'
+  | 'success'
+  | 'failed';
+
+export interface PaymentFlowState {
+  step: PaymentStep;
+  amount?: number;
+  phoneNumber?: string;
+  paymentMethod?: MobileMoneyProvider;
+  transactionId?: string;
+  error?: string;
+  isLoading?: boolean;
+}

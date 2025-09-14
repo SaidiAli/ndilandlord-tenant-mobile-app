@@ -1,97 +1,351 @@
-import { ScrollView, View, Text, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ScrollView, View, Text, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { Card } from '../../components/ui/Card';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { StatusBadge, getPaymentStatusBadge } from '../../components/ui/StatusBadge';
-
-// Mock payment data
-const mockPayments = [
-  {
-    id: '1',
-    amount: 1200,
-    dueDate: '2024-01-01',
-    status: 'pending',
-    description: 'Monthly Rent - January 2024',
-  },
-  {
-    id: '2',
-    amount: 1200,
-    paidDate: '2023-12-01',
-    dueDate: '2023-12-01',
-    status: 'completed',
-    description: 'Monthly Rent - December 2023',
-    paymentMethod: 'Credit Card',
-  },
-  {
-    id: '3',
-    amount: 1200,
-    paidDate: '2023-11-01',
-    dueDate: '2023-11-01',
-    status: 'completed',
-    description: 'Monthly Rent - November 2023',
-    paymentMethod: 'Bank Transfer',
-  },
-  {
-    id: '4',
-    amount: 1200,
-    paidDate: '2023-10-05',
-    dueDate: '2023-10-01',
-    status: 'completed',
-    description: 'Monthly Rent - October 2023',
-    paymentMethod: 'Credit Card',
-    isLate: true,
-  },
-];
-
-const currentBalance = 1200;
-const upcomingPayment = mockPayments.find(p => p.status === 'pending');
+import { PaymentAmountModal } from '../../components/ui/PaymentAmountModal';
+import { MobileMoneyPinModal } from '../../components/ui/MobileMoneyPinModal';
+import { PaymentStatusTracker } from '../../components/ui/PaymentStatusTracker';
+import { PaymentReceiptModal } from '../../components/ui/PaymentReceiptModal';
+import { useAuth } from '../../hooks/useAuth';
+import { paymentApi } from '../../lib/api';
+import { 
+  PaymentBalance, 
+  PaymentWithDetails, 
+  PaymentInitiationResponse, 
+  PaymentStatusResponse,
+  PaymentFlowState,
+  PaymentStep
+} from '../../types';
+import { 
+  formatUGX, 
+  formatPhoneNumber, 
+  normalizePhoneNumber,
+  validatePhoneNumber,
+  getMobileMoneyProvider
+} from '../../lib/currency';
 
 export default function PaymentsScreen() {
-  const handlePayNow = (paymentId: string) => {
-    // TODO: Implement payment processing
-    console.log('Pay now for payment:', paymentId);
+  const { user } = useAuth();
+  
+  // Data states
+  const [balance, setBalance] = useState<PaymentBalance | null>(null);
+  const [payments, setPayments] = useState<PaymentWithDetails[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Payment flow states
+  const [paymentFlow, setPaymentFlow] = useState<PaymentFlowState>({
+    step: 'amount-selection',
+  });
+  const [currentPayment, setCurrentPayment] = useState<PaymentInitiationResponse | null>(null);
+  const [selectedReceiptPaymentId, setSelectedReceiptPaymentId] = useState<string | null>(null);
+
+  // Mock lease ID - in a real app, this would come from user context or API
+  const TENANT_LEASE_ID = '74f63f60-4c8b-404a-8a37-45f03219138e';
+
+  const fetchPaymentData = async (showLoading = true) => {
+    try {
+      if (showLoading) setIsLoading(true);
+      setError(null);
+
+      // Fetch balance and payment history in parallel
+      const [balanceData, paymentsData] = await Promise.all([
+        paymentApi.getBalance(TENANT_LEASE_ID),
+        paymentApi.getHistory(TENANT_LEASE_ID),
+      ]);
+
+      setBalance(balanceData);
+      setPayments(paymentsData);
+    } catch (err: any) {
+      console.error('Failed to fetch payment data:', err);
+      setError(err.message || 'Failed to load payment information');
+    } finally {
+      if (showLoading) setIsLoading(false);
+    }
   };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchPaymentData(false);
+    setIsRefreshing(false);
+  };
+
+  // Fetch data on component mount and focus
+  useEffect(() => {
+    fetchPaymentData();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Refresh when screen comes into focus
+      fetchPaymentData(false);
+    }, [])
+  );
+
+  const handlePayNow = () => {
+    if (!balance) return;
+    
+    setPaymentFlow({
+      step: 'amount-selection',
+      isLoading: false,
+    });
+  };
+
+  const handleAmountConfirm = async (amount: number) => {
+    if (!balance) return;
+
+    try {
+      setPaymentFlow(prev => ({ ...prev, amount, isLoading: true }));
+
+      // For demo purposes, use a default phone number
+      const phoneNumber = user?.phone || '256700654321';
+      const normalizedPhone = normalizePhoneNumber(phoneNumber);
+      const provider = getMobileMoneyProvider(normalizedPhone);
+      
+      const providerName = provider === 'mtn' ? 'MTN MoMo' : 
+                          provider === 'airtel' ? 'Airtel Money' : 
+                          'Mobile Money';
+
+      setPaymentFlow(prev => ({
+        ...prev,
+        phoneNumber: normalizedPhone,
+        paymentMethod: {
+          id: provider === 'unknown' ? 'mtn' : provider,
+          name: provider === 'unknown' ? 'mtn' : provider,
+          displayName: providerName,
+          color: provider === 'mtn' ? '#FFCB05' : '#E51A1A',
+          icon: 'phone-android',
+          prefixes: [],
+        },
+        step: 'pin-entry',
+        isLoading: false,
+      }));
+
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to proceed with payment');
+      setPaymentFlow(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  const handlePinConfirm = async (pin: string) => {
+    if (!balance || !paymentFlow.amount || !paymentFlow.phoneNumber) return;
+
+    try {
+      setPaymentFlow(prev => ({ ...prev, isLoading: true, error: undefined }));
+
+      // Initiate payment
+      const paymentResponse = await paymentApi.initiate({
+        leaseId: TENANT_LEASE_ID,
+        amount: paymentFlow.amount,
+        phoneNumber: paymentFlow.phoneNumber,
+        paymentMethod: 'mobile_money',
+      });
+
+      setCurrentPayment(paymentResponse);
+      setPaymentFlow(prev => ({
+        ...prev,
+        transactionId: paymentResponse.transactionId,
+        step: 'processing',
+        isLoading: false,
+      }));
+
+    } catch (err: any) {
+      console.error('Payment initiation failed:', err);
+      setPaymentFlow(prev => ({ 
+        ...prev, 
+        error: err.message || 'Payment failed. Please try again.',
+        isLoading: false 
+      }));
+    }
+  };
+
+  const handlePaymentSuccess = (status: PaymentStatusResponse) => {
+    setPaymentFlow(prev => ({ ...prev, step: 'success' }));
+    // Refresh payment data to show updated balance
+    fetchPaymentData(false);
+  };
+
+  const handlePaymentFailed = (status: PaymentStatusResponse) => {
+    setPaymentFlow(prev => ({ 
+      ...prev, 
+      step: 'failed',
+      error: status.statusMessage || 'Payment failed'
+    }));
+  };
+
+  const handlePaymentTimeout = () => {
+    setPaymentFlow(prev => ({ 
+      ...prev, 
+      step: 'failed',
+      error: 'Payment processing timed out. Please check your payment status manually.'
+    }));
+  };
+
+  const closePaymentFlow = () => {
+    setPaymentFlow({ step: 'amount-selection' });
+    setCurrentPayment(null);
+  };
+
+  const retryPayment = () => {
+    setPaymentFlow({ step: 'amount-selection' });
+    setCurrentPayment(null);
+  };
+
+  if (isLoading) {
+    return <LoadingSpinner message="Loading payment information..." />;
+  }
+
+  if (error && !balance) {
+    return (
+      <View className="flex-1 bg-gray-50 justify-center items-center px-4">
+        <MaterialIcons name="error" size={48} color="#EF4444" />
+        <Text className="text-lg font-semibold text-gray-800 mt-4 text-center">
+          Unable to Load Payments
+        </Text>
+        <Text className="text-gray-600 mt-2 text-center">
+          {error}
+        </Text>
+        <TouchableOpacity
+          onPress={() => fetchPaymentData()}
+          className="bg-[#2D5A4A] px-6 py-3 rounded-md mt-4"
+        >
+          <Text className="text-white font-semibold">Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-gray-50">
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+        }
+      >
         <View className="px-4 pt-6 pb-4">
           {/* Header */}
           <Text className="text-2xl font-semibold text-gray-800 mb-6">
             Payments
           </Text>
 
-          {/* Current Balance Card */}
-          <Card className="mb-4">
-            <View className="space-y-4">
-              <View className="flex-row justify-between items-center">
-                <Text className="text-lg font-semibold text-gray-800">
-                  Current Balance
-                </Text>
-                <MaterialIcons name="account-balance" size={24} color="#6B7280" />
-              </View>
-              
-              <View className="space-y-2">
-                <Text className="text-3xl font-bold text-[#2D5A4A]">
-                  ${currentBalance}
-                </Text>
-                <Text className="text-gray-600 text-sm">
-                  Due: {upcomingPayment ? new Date(upcomingPayment.dueDate).toLocaleDateString() : 'No upcoming payments'}
-                </Text>
-              </View>
+          {/* Payment Status Tracker (during processing) */}
+          {paymentFlow.step === 'processing' && currentPayment && (
+            <PaymentStatusTracker
+              transactionId={currentPayment.transactionId}
+              amount={currentPayment.amount}
+              onSuccess={handlePaymentSuccess}
+              onFailed={handlePaymentFailed}
+              onTimeout={handlePaymentTimeout}
+              className="mb-6"
+            />
+          )}
 
-              {upcomingPayment && (
-                <TouchableOpacity 
-                  className="bg-[#2D5A4A] py-3 rounded-md items-center flex-row justify-center space-x-2 active:bg-[#254B3C]"
-                  onPress={() => handlePayNow(upcomingPayment.id)}
+          {/* Success/Failure Messages */}
+          {paymentFlow.step === 'success' && currentPayment && (
+            <Card className="mb-6 bg-green-50 border-green-200">
+              <View className="items-center space-y-4 py-4">
+                <MaterialIcons name="check-circle" size={48} color="#10B981" />
+                <Text className="text-xl font-bold text-green-800">
+                  Payment Successful!
+                </Text>
+                <Text className="text-green-700 text-center">
+                  Your payment of {formatUGX(currentPayment.amount)} has been processed successfully.
+                </Text>
+                <TouchableOpacity
+                  onPress={closePaymentFlow}
+                  className="bg-green-600 px-6 py-3 rounded-md"
                 >
-                  <MaterialIcons name="payment" size={20} color="white" />
-                  <Text className="text-white font-medium text-lg">
-                    Pay Now
-                  </Text>
+                  <Text className="text-white font-semibold">Continue</Text>
                 </TouchableOpacity>
-              )}
-            </View>
-          </Card>
+              </View>
+            </Card>
+          )}
+
+          {paymentFlow.step === 'failed' && (
+            <Card className="mb-6 bg-red-50 border-red-200">
+              <View className="items-center space-y-4 py-4">
+                <MaterialIcons name="error" size={48} color="#EF4444" />
+                <Text className="text-xl font-bold text-red-800">
+                  Payment Failed
+                </Text>
+                <Text className="text-red-700 text-center">
+                  {paymentFlow.error || 'Your payment could not be processed.'}
+                </Text>
+                <View className="flex-row space-x-3">
+                  <TouchableOpacity
+                    onPress={retryPayment}
+                    className="bg-red-600 px-6 py-3 rounded-md"
+                  >
+                    <Text className="text-white font-semibold">Try Again</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={closePaymentFlow}
+                    className="border border-red-600 px-6 py-3 rounded-md"
+                  >
+                    <Text className="text-red-600 font-semibold">Close</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Card>
+          )}
+
+          {/* Current Balance Card */}
+          {balance && (
+            <Card className="mb-4">
+              <View className="space-y-4">
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-lg font-semibold text-gray-800">
+                    Outstanding Balance
+                  </Text>
+                  <MaterialIcons 
+                    name={balance.isOverdue ? "warning" : "account-balance"} 
+                    size={24} 
+                    color={balance.isOverdue ? "#F59E0B" : "#6B7280"} 
+                  />
+                </View>
+                
+                <View className="space-y-2">
+                  <Text className="text-3xl font-bold text-[#2D5A4A]">
+                    {formatUGX(balance.outstandingBalance)}
+                  </Text>
+                  <View className="flex-row justify-between">
+                    <Text className="text-gray-600 text-sm">
+                      Monthly Rent: {formatUGX(balance.monthlyRent)}
+                    </Text>
+                    <Text className="text-gray-600 text-sm">
+                      Paid: {formatUGX(balance.paidAmount)}
+                    </Text>
+                  </View>
+                  <Text className="text-gray-600 text-sm">
+                    Next Due: {new Date(balance.dueDate).toLocaleDateString()}
+                  </Text>
+                  {balance.isOverdue && (
+                    <Text className="text-yellow-600 text-sm font-medium">
+                      ⚠️ Payment is overdue
+                    </Text>
+                  )}
+                </View>
+
+                {balance.outstandingBalance > 0 && (
+                  <TouchableOpacity 
+                    className="bg-[#2D5A4A] py-3 rounded-md items-center flex-row justify-center space-x-2 active:bg-[#254B3C]"
+                    onPress={handlePayNow}
+                    disabled={paymentFlow.step !== 'amount-selection'}
+                  >
+                    <MaterialIcons name="payment" size={20} color="white" />
+                    <Text className="text-white font-medium text-lg">
+                      Pay Now
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </Card>
+          )}
 
           {/* Payment Methods Card */}
           <Card className="mb-4">
@@ -100,35 +354,35 @@ export default function PaymentsScreen() {
                 Payment Methods
               </Text>
               
-              <TouchableOpacity className="flex-row items-center justify-between py-2 px-2 rounded-md active:bg-gray-100">
+              <View className="flex-row items-center justify-between py-2 px-2 rounded-md bg-yellow-50 border border-yellow-200">
                 <View className="flex-row items-center space-x-3">
-                  <MaterialIcons name="credit-card" size={24} color="#6B7280" />
+                  <MaterialIcons name="phone-android" size={24} color="#F59E0B" />
                   <View>
                     <Text className="font-medium text-gray-800">
-                      Credit/Debit Card
+                      MTN Mobile Money
                     </Text>
                     <Text className="text-sm text-gray-600">
-                      Visa, Mastercard, American Express
+                      Pay with your MTN MoMo account
                     </Text>
                   </View>
                 </View>
-                <MaterialIcons name="chevron-right" size={20} color="#6B7280" />
-              </TouchableOpacity>
+                <MaterialIcons name="verified" size={20} color="#10B981" />
+              </View>
 
-              <TouchableOpacity className="flex-row items-center justify-between py-2 px-2 rounded-md active:bg-gray-100">
+              <View className="flex-row items-center justify-between py-2 px-2 rounded-md bg-red-50 border border-red-200">
                 <View className="flex-row items-center space-x-3">
-                  <MaterialIcons name="account-balance" size={24} color="#6B7280" />
+                  <MaterialIcons name="phone-android" size={24} color="#E51A1A" />
                   <View>
                     <Text className="font-medium text-gray-800">
-                      Bank Transfer (ACH)
+                      Airtel Money
                     </Text>
                     <Text className="text-sm text-gray-600">
-                      Direct from your bank account
+                      Pay with your Airtel Money account
                     </Text>
                   </View>
                 </View>
-                <MaterialIcons name="chevron-right" size={20} color="#6B7280" />
-              </TouchableOpacity>
+                <MaterialIcons name="verified" size={20} color="#10B981" />
+              </View>
             </View>
           </Card>
 
@@ -139,69 +393,123 @@ export default function PaymentsScreen() {
                 Payment History
               </Text>
 
-              <View className="space-y-0">
-                {mockPayments.map((payment, index) => (
-                  <TouchableOpacity
-                    key={payment.id}
-                    className="py-4 rounded-md active:bg-gray-50"
-                  >
-                    <View className="space-y-2">
-                      <View className="flex-row justify-between items-start">
-                        <View className="flex-1 space-y-1">
-                          <Text className="font-medium text-gray-800">
-                            {payment.description}
-                          </Text>
-                          <Text className="text-sm text-gray-600">
-                            Due: {new Date(payment.dueDate).toLocaleDateString()}
-                            {payment.paidDate && (
-                              <Text>
-                                {' • Paid: '}
-                                {new Date(payment.paidDate).toLocaleDateString()}
+              {payments.length === 0 ? (
+                <View className="items-center py-8">
+                  <MaterialIcons name="receipt" size={48} color="#9CA3AF" />
+                  <Text className="text-gray-500 mt-2">No payments yet</Text>
+                </View>
+              ) : (
+                <View className="space-y-0">
+                  {payments.map((paymentData, index) => {
+                    const payment = paymentData.payment;
+                    const isLate = payment.paidDate && 
+                      new Date(payment.paidDate) > new Date(payment.dueDate);
+
+                    return (
+                      <TouchableOpacity
+                        key={payment.id}
+                        className="py-4 rounded-md active:bg-gray-50"
+                        onPress={() => {
+                          if (payment.status === 'completed') {
+                            setSelectedReceiptPaymentId(payment.id);
+                          }
+                        }}
+                      >
+                        <View className="space-y-2">
+                          <View className="flex-row justify-between items-start">
+                            <View className="flex-1 space-y-1">
+                              <Text className="font-medium text-gray-800">
+                                Rent Payment
                               </Text>
-                            )}
-                          </Text>
-                          {payment.paymentMethod && (
-                            <Text className="text-sm text-gray-500">
-                              {payment.paymentMethod}
-                            </Text>
-                          )}
-                          {payment.isLate && (
-                            <Text className="text-sm text-yellow-600 font-medium">
-                              Late Payment
-                            </Text>
-                          )}
+                              <Text className="text-sm text-gray-600">
+                                Due: {new Date(payment.dueDate).toLocaleDateString()}
+                                {payment.paidDate && (
+                                  <Text>
+                                    {' • Paid: '}
+                                    {new Date(payment.paidDate).toLocaleDateString()}
+                                  </Text>
+                                )}
+                              </Text>
+                              {payment.paymentMethod && (
+                                <Text className="text-sm text-gray-500">
+                                  {payment.paymentMethod === 'mobile_money' ? 'Mobile Money' : payment.paymentMethod}
+                                </Text>
+                              )}
+                              {payment.transactionId && (
+                                <Text className="text-xs text-gray-400 font-mono">
+                                  {payment.transactionId.substring(0, 8)}...
+                                </Text>
+                              )}
+                              {isLate && (
+                                <Text className="text-sm text-yellow-600 font-medium">
+                                  Late Payment
+                                </Text>
+                              )}
+                              {payment.status === 'completed' && (
+                                <Text className="text-xs text-[#2D5A4A] font-medium">
+                                  Tap to view receipt
+                                </Text>
+                              )}
+                            </View>
+                            
+                            <View className="items-end space-y-1">
+                              <Text className="text-lg font-bold text-gray-800">
+                                {formatUGX(parseFloat(payment.amount))}
+                              </Text>
+                              <StatusBadge {...getPaymentStatusBadge(payment.status)} />
+                              {payment.status === 'completed' && (
+                                <MaterialIcons name="receipt" size={16} color="#2D5A4A" />
+                              )}
+                            </View>
+                          </View>
                         </View>
                         
-                        <View className="items-end space-y-1">
-                          <Text className="text-lg font-bold text-gray-800">
-                            ${payment.amount}
-                          </Text>
-                          <StatusBadge {...getPaymentStatusBadge(payment.status)} />
-                        </View>
-                      </View>
-                      
-                      {payment.status === 'pending' && (
-                        <TouchableOpacity
-                          className="mt-2 border border-[#2D5A4A] py-2 px-4 rounded-md active:bg-[#2D5A4A]/10"
-                          onPress={() => handlePayNow(payment.id)}
-                        >
-                          <Text className="text-[#2D5A4A] font-medium text-center">
-                            Pay Now
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                    
-                    {index < mockPayments.length - 1 && (
-                      <View className="border-t border-gray-200 mt-4" />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
+                        {index < payments.length - 1 && (
+                          <View className="border-t border-gray-200 mt-4" />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
             </View>
           </Card>
         </View>
       </ScrollView>
+
+      {/* Payment Amount Modal */}
+      {balance && (
+        <PaymentAmountModal
+          visible={paymentFlow.step === 'amount-selection'}
+          onClose={closePaymentFlow}
+          onConfirm={handleAmountConfirm}
+          balance={balance}
+          isLoading={paymentFlow.isLoading}
+        />
+      )}
+
+      {/* Mobile Money PIN Modal */}
+      {paymentFlow.paymentMethod && paymentFlow.phoneNumber && (
+        <MobileMoneyPinModal
+          visible={paymentFlow.step === 'pin-entry'}
+          onClose={closePaymentFlow}
+          onConfirm={handlePinConfirm}
+          amount={paymentFlow.amount || 0}
+          phoneNumber={paymentFlow.phoneNumber}
+          providerName={paymentFlow.paymentMethod.displayName}
+          isLoading={paymentFlow.isLoading}
+          error={paymentFlow.error}
+        />
+      )}
+
+      {/* Payment Receipt Modal */}
+      {selectedReceiptPaymentId && (
+        <PaymentReceiptModal
+          visible={!!selectedReceiptPaymentId}
+          onClose={() => setSelectedReceiptPaymentId(null)}
+          paymentId={selectedReceiptPaymentId}
+        />
+      )}
     </View>
   );
 }
