@@ -29,41 +29,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        console.log('Initializing authentication...');
-        
         const token = await secureStorage.getToken();
         const storedUser = await secureStorage.getUser();
-
-        console.log('Stored auth data:', { 
-          hasToken: !!token, 
-          hasUser: !!storedUser,
-          userRole: storedUser?.role 
-        });
 
         if (token && storedUser) {
           // Verify token is still valid by calling /me endpoint
           try {
-            console.log('Verifying token with server...');
             const currentUser = await authApi.getCurrentUser();
-            console.log('Token verified, user data updated');
             setUser(currentUser);
             await secureStorage.setUser(currentUser); // Update stored user data
           } catch (error: any) {
-            console.error('Token verification failed:', error);
             // Token is invalid, clear auth data
             await secureStorage.clear();
             setUser(null);
           }
-        } else {
-          console.log('No stored auth data found');
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
         await secureStorage.clear();
         setUser(null);
       } finally {
         setIsLoading(false);
-        console.log('Auth initialization complete');
       }
     };
 
@@ -72,20 +57,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (username: string, password: string) => {
     try {
-      console.log('Login attempt for user:', username);
-      
       const response = await authApi.login({ username, password });
-      
-      console.log('Login successful, storing user data');
       
       await secureStorage.setToken(response.token);
       await secureStorage.setUser(response.user);
       setUser(response.user);
       
-      console.log('Redirecting to tabs');
       router.replace('/(tabs)');
     } catch (error: any) {
-      console.error('Login failed in useAuth:', error);
       throw error;
     }
   };
@@ -102,7 +81,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(currentUser);
       await secureStorage.setUser(currentUser);
     } catch (error) {
-      console.error('Failed to refresh user:', error);
       await logout();
     }
   };

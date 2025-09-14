@@ -7,7 +7,7 @@ import { Platform } from 'react-native';
 // Get the correct API URL based on platform
 const getApiUrl = () => {
   // Default to localhost
-  let baseUrl = 'http://localhost:4000/api';
+  let baseUrl = 'http://192.168.100.30:4000/api';
   
   // For Android emulator, use 10.0.2.2 instead of localhost
   if (Platform.OS === 'android') {
@@ -69,11 +69,7 @@ export const authApi = {
         password: credentials.password,
       };
       
-      console.log('Attempting login with:', { userName: requestData.userName });
-      
       const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', requestData);
-      
-      console.log('Login response:', response.data);
       
       if (!response.data.success || !response.data.data) {
         throw new Error(response.data.error || 'Login failed');
@@ -87,8 +83,6 @@ export const authApi = {
       
       return authData;
     } catch (error: any) {
-      console.error('Login API error:', error);
-      
       if (error.response?.status === 401) {
         throw new Error('Invalid username or password');
       } else if (error.response?.status === 500) {
@@ -111,8 +105,6 @@ export const authApi = {
       
       return response.data.data;
     } catch (error: any) {
-      console.error('Get current user API error:', error);
-      
       if (error.response?.status === 401) {
         // Token expired or invalid
         await secureStorage.clear();

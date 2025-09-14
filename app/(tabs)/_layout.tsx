@@ -47,24 +47,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="lease"
-        options={{
-          title: 'Lease',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="description" size={size || 24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="property"
-        options={{
-          title: 'Property',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="home" size={size || 24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',

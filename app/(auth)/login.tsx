@@ -15,7 +15,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
-import { debugAPI, getNetworkInfo } from '../../lib/debug';
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Username is required'),
@@ -26,29 +25,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isDebugging, setIsDebugging] = useState(false);
   const { login } = useAuth();
-
-  const handleDebugConnection = async () => {
-    setIsDebugging(true);
-    try {
-      const networkInfo = getNetworkInfo();
-      console.log('Network info:', networkInfo);
-      
-      const connectionTest = await debugAPI.testConnection();
-      const authTest = await debugAPI.testAuthEndpoint();
-      
-      Alert.alert(
-        'Debug Information',
-        `API URL: ${networkInfo.apiUrl}\n\nConnection Test: ${connectionTest.message}\n\nAuth Test: ${authTest.message}`,
-        [{ text: 'OK' }]
-      );
-    } catch (error: any) {
-      Alert.alert('Debug Error', error.message);
-    } finally {
-      setIsDebugging(false);
-    }
-  };
 
   const {
     control,
@@ -62,12 +39,8 @@ export default function LoginScreen() {
     setIsLoading(true);
 
     try {
-      console.log('Form submission for username:', data.username);
       await login(data.username, data.password);
-      console.log('Login successful!');
     } catch (err: any) {
-      console.error('Login form error:', err);
-      
       let errorMessage = 'Login failed';
       
       if (err.message) {
@@ -204,17 +177,6 @@ export default function LoginScreen() {
                 <Text className="text-sm text-gray-500 text-center mt-6">
                   Need help? Contact your property manager
                 </Text>
-
-                {/* Debug Button - Remove in production */}
-                <TouchableOpacity
-                  onPress={handleDebugConnection}
-                  disabled={isDebugging}
-                  className="mt-4 p-2"
-                >
-                  <Text className="text-xs text-gray-400 text-center underline">
-                    {isDebugging ? 'Testing Connection...' : 'Debug Connection'}
-                  </Text>
-                </TouchableOpacity>
               </View>
             </View>
           </View>

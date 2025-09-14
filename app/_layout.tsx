@@ -39,6 +39,36 @@ export default function RootLayout() {
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen 
+                name="screens/lease" 
+                options={{ 
+                  headerShown: true,
+                  title: 'Lease Information',
+                  headerStyle: { backgroundColor: '#2D5A4A' },
+                  headerTintColor: 'white',
+                  headerTitleStyle: { fontWeight: 'bold' }
+                }} 
+              />
+              <Stack.Screen 
+                name="screens/property" 
+                options={{ 
+                  headerShown: true,
+                  title: 'Property Information',
+                  headerStyle: { backgroundColor: '#2D5A4A' },
+                  headerTintColor: 'white',
+                  headerTitleStyle: { fontWeight: 'bold' }
+                }} 
+              />
+              <Stack.Screen 
+                name="screens/help" 
+                options={{ 
+                  headerShown: true,
+                  title: 'Help & Resources',
+                  headerStyle: { backgroundColor: '#2D5A4A' },
+                  headerTintColor: 'white',
+                  headerTitleStyle: { fontWeight: 'bold' }
+                }} 
+              />
             </Stack>
             <StatusBar style="light" backgroundColor="#2D5A4A" />
           </ThemeProvider>
