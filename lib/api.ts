@@ -146,7 +146,9 @@ export const paymentApi = {
       return response.data.data;
     } catch (error: any) {
       if (error.response?.status === 404) {
-        throw new Error('Lease not found');
+        throw new Error('Lease not found. Please contact support.');
+      } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+        throw new Error('Unable to connect to server. Please check your connection.');
       }
       throw new Error(error.message || 'Failed to get payment balance');
     }
@@ -159,12 +161,17 @@ export const paymentApi = {
     try {
       const response = await api.get<ApiResponse<PaymentWithDetails[]>>(`/payments/lease/${leaseId}/history`);
       
-      if (!response.data.success || !response.data.data) {
+      if (!response.data.success) {
         throw new Error(response.data.error || 'Failed to get payment history');
       }
       
-      return response.data.data;
+      // Return empty array if no data (first time users)
+      return response.data.data || [];
     } catch (error: any) {
+      if (error.response?.status === 404) {
+        // Return empty array for lease not found or no history
+        return [];
+      }
       throw new Error(error.message || 'Failed to get payment history');
     }
   },

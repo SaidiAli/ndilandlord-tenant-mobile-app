@@ -66,9 +66,9 @@ export interface Payment {
   id: string;
   leaseId: string;
   amount: number;
-  dueDate: string;
+  dueDate?: string;
   paidDate?: string;
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
   paymentMethod?: string;
   transactionId?: string;
   notes?: string;
@@ -218,6 +218,7 @@ export interface MobileMoneyProvider {
 
 // Payment Flow Types
 export type PaymentStep = 
+  | 'idle'
   | 'amount-selection'
   | 'payment-method'
   | 'confirmation'

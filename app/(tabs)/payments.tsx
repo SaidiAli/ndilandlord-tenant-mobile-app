@@ -39,7 +39,7 @@ export default function PaymentsScreen() {
 
   // Payment flow states
   const [paymentFlow, setPaymentFlow] = useState<PaymentFlowState>({
-    step: 'amount-selection',
+    step: 'idle',
   });
   const [currentPayment, setCurrentPayment] = useState<PaymentInitiationResponse | null>(null);
   const [selectedReceiptPaymentId, setSelectedReceiptPaymentId] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export default function PaymentsScreen() {
   // Mock lease ID - in a real app, this would come from user context or API
   const TENANT_LEASE_ID = '74f63f60-4c8b-404a-8a37-45f03219138e';
 
-  const fetchPaymentData = async (showLoading = true) => {
+  const fetchPaymentData = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setIsLoading(true);
       setError(null);
@@ -66,13 +66,13 @@ export default function PaymentsScreen() {
     } finally {
       if (showLoading) setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     await fetchPaymentData(false);
     setIsRefreshing(false);
-  };
+  }, [fetchPaymentData]);
 
   // Fetch data on component mount and focus
   useEffect(() => {
@@ -86,16 +86,16 @@ export default function PaymentsScreen() {
     }, [])
   );
 
-  const handlePayNow = () => {
+  const handlePayNow = useCallback(() => {
     if (!balance) return;
     
     setPaymentFlow({
       step: 'amount-selection',
       isLoading: false,
     });
-  };
+  }, [balance]);
 
-  const handleAmountConfirm = async (amount: number) => {
+  const handleAmountConfirm = useCallback(async (amount: number) => {
     if (!balance) return;
 
     try {
@@ -129,71 +129,80 @@ export default function PaymentsScreen() {
       Alert.alert('Error', err.message || 'Failed to proceed with payment');
       setPaymentFlow(prev => ({ ...prev, isLoading: false }));
     }
-  };
+  }, [balance, user?.phone]);
 
-  const handlePinConfirm = async (pin: string) => {
-    if (!balance || !paymentFlow.amount || !paymentFlow.phoneNumber) return;
+  const handlePinConfirm = useCallback(async (pin: string) => {
+    setPaymentFlow(prev => {
+      const { amount, phoneNumber } = prev;
+      
+      if (!balance || !amount || !phoneNumber) return prev;
 
-    try {
-      setPaymentFlow(prev => ({ ...prev, isLoading: true, error: undefined }));
+      // Start async payment process
+      (async () => {
+        try {
+          setPaymentFlow(current => ({ ...current, isLoading: true, error: undefined }));
 
-      // Initiate payment
-      const paymentResponse = await paymentApi.initiate({
-        leaseId: TENANT_LEASE_ID,
-        amount: paymentFlow.amount,
-        phoneNumber: paymentFlow.phoneNumber,
-        paymentMethod: 'mobile_money',
-      });
+          // Initiate payment
+          const paymentResponse = await paymentApi.initiate({
+            leaseId: TENANT_LEASE_ID,
+            amount,
+            phoneNumber,
+            paymentMethod: 'mobile_money',
+          });
 
-      setCurrentPayment(paymentResponse);
-      setPaymentFlow(prev => ({
-        ...prev,
-        transactionId: paymentResponse.transactionId,
-        step: 'processing',
-        isLoading: false,
-      }));
+          setCurrentPayment(paymentResponse);
+          setPaymentFlow(current => ({
+            ...current,
+            transactionId: paymentResponse.transactionId,
+            step: 'processing',
+            isLoading: false,
+          }));
 
-    } catch (err: any) {
-      console.error('Payment initiation failed:', err);
-      setPaymentFlow(prev => ({ 
-        ...prev, 
-        error: err.message || 'Payment failed. Please try again.',
-        isLoading: false 
-      }));
-    }
-  };
+        } catch (err: any) {
+          console.error('Payment initiation failed:', err);
+          setPaymentFlow(current => ({ 
+            ...current, 
+            error: err.message || 'Payment failed. Please try again.',
+            isLoading: false 
+          }));
+        }
+      })();
 
-  const handlePaymentSuccess = (status: PaymentStatusResponse) => {
+      return { ...prev, isLoading: true, error: undefined };
+    });
+  }, [balance]);
+
+  const handlePaymentSuccess = useCallback((status: PaymentStatusResponse) => {
     setPaymentFlow(prev => ({ ...prev, step: 'success' }));
     // Refresh payment data to show updated balance
     fetchPaymentData(false);
-  };
+  }, [fetchPaymentData]);
 
-  const handlePaymentFailed = (status: PaymentStatusResponse) => {
+  const handlePaymentFailed = useCallback((status: PaymentStatusResponse) => {
     setPaymentFlow(prev => ({ 
       ...prev, 
       step: 'failed',
       error: status.statusMessage || 'Payment failed'
     }));
-  };
+  }, []);
 
-  const handlePaymentTimeout = () => {
+  const handlePaymentTimeout = useCallback(() => {
     setPaymentFlow(prev => ({ 
       ...prev, 
       step: 'failed',
       error: 'Payment processing timed out. Please check your payment status manually.'
     }));
-  };
+  }, []);
 
-  const closePaymentFlow = () => {
+  const closePaymentFlow = useCallback(() => {
+    setPaymentFlow({ step: 'idle' });
+    setCurrentPayment(null);
+  }, []);
+
+  const retryPayment = useCallback(() => {
     setPaymentFlow({ step: 'amount-selection' });
     setCurrentPayment(null);
-  };
-
-  const retryPayment = () => {
-    setPaymentFlow({ step: 'amount-selection' });
-    setCurrentPayment(null);
-  };
+  }, []);
 
   if (isLoading) {
     return <LoadingSpinner message="Loading payment information..." />;
@@ -335,7 +344,7 @@ export default function PaymentsScreen() {
                   <TouchableOpacity 
                     className="bg-[#2D5A4A] py-3 rounded-md items-center flex-row justify-center space-x-2 active:bg-[#254B3C]"
                     onPress={handlePayNow}
-                    disabled={paymentFlow.step !== 'amount-selection'}
+                    disabled={paymentFlow.step !== 'idle'}
                   >
                     <MaterialIcons name="payment" size={20} color="white" />
                     <Text className="text-white font-medium text-lg">
@@ -402,7 +411,7 @@ export default function PaymentsScreen() {
                 <View className="space-y-0">
                   {payments.map((paymentData, index) => {
                     const payment = paymentData.payment;
-                    const isLate = payment.paidDate && 
+                    const isLate = payment.paidDate && payment.dueDate && 
                       new Date(payment.paidDate) > new Date(payment.dueDate);
 
                     return (
@@ -422,10 +431,12 @@ export default function PaymentsScreen() {
                                 Rent Payment
                               </Text>
                               <Text className="text-sm text-gray-600">
-                                Due: {new Date(payment.dueDate).toLocaleDateString()}
+                                {payment.dueDate && (
+                                  <>Due: {new Date(payment.dueDate).toLocaleDateString()}</>
+                                )}
                                 {payment.paidDate && (
                                   <Text>
-                                    {' • Paid: '}
+                                    {payment.dueDate ? ' • Paid: ' : 'Paid: '}
                                     {new Date(payment.paidDate).toLocaleDateString()}
                                   </Text>
                                 )}
@@ -454,7 +465,7 @@ export default function PaymentsScreen() {
                             
                             <View className="items-end space-y-1">
                               <Text className="text-lg font-bold text-gray-800">
-                                {formatUGX(parseFloat(payment.amount))}
+                                {formatUGX(typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount)}
                               </Text>
                               <StatusBadge {...getPaymentStatusBadge(payment.status)} />
                               {payment.status === 'completed' && (
