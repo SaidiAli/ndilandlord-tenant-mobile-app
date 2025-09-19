@@ -11,7 +11,9 @@ import {
   PaymentInitiationResponse,
   PaymentStatusResponse,
   PaymentReceipt,
-  PaymentWithDetails
+  PaymentWithDetails,
+  LeaseApiResponse,
+  transformLeaseResponse
 } from '../types';
 
 import { Platform } from 'react-native';
@@ -270,8 +272,11 @@ export const tenantApi = {
   },
 
   getLeaseInfo: async () => {
-    const response = await api.get('/tenant/lease');
-    return response.data;
+    const response = await api.get<ApiResponse<LeaseApiResponse[]>>('/tenant/lease');
+    if (response.data?.data && Array.isArray(response.data.data)) {
+      return response.data.data.map(transformLeaseResponse);
+    }
+    return [];
   },
 
   getPayments: async () => {
