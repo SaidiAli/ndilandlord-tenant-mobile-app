@@ -2,51 +2,75 @@ import { ScrollView, View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Card } from '../../components/ui/Card';
 import { StatusBadge } from '../../components/ui/StatusBadge';
-
-// Mock lease data
-const mockLease = {
-  id: '1',
-  property: {
-    name: 'Maple Gardens Apartments',
-    address: '123 Maple Street',
-    city: 'Springfield',
-    state: 'IL',
-    zipCode: '62701',
-  },
-  unit: {
-    number: '2A',
-    bedrooms: 2,
-    bathrooms: 1.5,
-    squareFeet: 950,
-  },
-  terms: {
-    startDate: '2023-06-01',
-    endDate: '2024-05-31',
-    monthlyRent: 1200,
-    deposit: 1200,
-    status: 'active',
-  },
-  landlord: {
-    name: 'John Smith',
-    email: 'john.smith@example.com',
-    phone: '(555) 123-4567',
-  },
-  documents: [
-    { id: '1', name: 'Lease Agreement', type: 'pdf', date: '2023-05-15' },
-    { id: '2', name: 'Move-in Checklist', type: 'pdf', date: '2023-06-01' },
-    { id: '3', name: 'Property Rules', type: 'pdf', date: '2023-05-15' },
-  ],
-};
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { useQuery } from '@tanstack/react-query';
+import { tenantApi } from '../../lib/api';
+import { Lease } from '../../types';
+import { useState, useEffect } from 'react';
 
 export default function LeaseScreen() {
+  const [currentLease, setCurrentLease] = useState<Lease | null>(null);
+
+  // Fetch lease information
+  const { data: leases, isLoading, error } = useQuery({
+    queryKey: ['tenant-lease'],
+    queryFn: tenantApi.getLeaseInfo,
+  });
+
+  useEffect(() => {
+    if (leases && leases.length > 0) {
+      // Get the most recent active lease
+      const activeLease = leases.find(lease => lease.lease.status === 'active');
+      setCurrentLease(activeLease || leases[0]);
+    }
+  }, [leases]);
+
   const handleDownloadDocument = (documentId: string) => {
     // TODO: Implement document download
     console.log('Download document:', documentId);
   };
 
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-gray-50 justify-center items-center">
+        <LoadingSpinner size="large" />
+        <Text className="text-gray-600 mt-4">Loading lease information...</Text>
+      </View>
+    );
+  }
+
+  if (error || !currentLease) {
+    return (
+      <View className="flex-1 bg-gray-50 justify-center items-center px-4">
+        <MaterialIcons name="error-outline" size={48} color="#EF4444" />
+        <Text className="text-xl font-semibold text-gray-800 mt-4 text-center">
+          Unable to Load Lease Information
+        </Text>
+        <Text className="text-gray-600 mt-2 text-center">
+          {error ? 'Failed to fetch lease data. Please try again later.' : 'No lease information found. Contact your landlord if this seems incorrect.'}
+        </Text>
+      </View>
+    );
+  }
+
   const daysUntilExpiry = Math.ceil(
-    (new Date(mockLease.terms.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+    (new Date(currentLease.lease.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
   );
+
+  const getStatusBadgeProps = (status: string) => {
+    switch (status) {
+      case 'active':
+        return { status: 'success' as const, text: 'Active' };
+      case 'draft':
+        return { status: 'warning' as const, text: 'Draft' };
+      case 'expired':
+        return { status: 'error' as const, text: 'Expired' };
+      case 'terminated':
+        return { status: 'error' as const, text: 'Terminated' };
+      default:
+        return { status: 'default' as const, text: status };
+    }
+  };
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -64,14 +88,14 @@ export default function LeaseScreen() {
                 <Text className="text-lg font-semibold text-gray-800">
                   Lease Status
                 </Text>
-                <StatusBadge status="success" text="Active" />
+                <StatusBadge {...getStatusBadgeProps(currentLease.lease.status)} />
               </View>
               
               <View className="space-y-2">
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Lease Period:</Text>
                   <Text className="font-medium text-gray-800">
-                    {new Date(mockLease.terms.startDate).toLocaleDateString()} - {new Date(mockLease.terms.endDate).toLocaleDateString()}
+                    {new Date(currentLease.lease.startDate).toLocaleDateString()} - {new Date(currentLease.lease.endDate).toLocaleDateString()}
                   </Text>
                 </View>
                 <View className="flex-row justify-between">
@@ -103,19 +127,19 @@ export default function LeaseScreen() {
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Property:</Text>
                   <Text className="font-medium text-gray-800 text-right flex-1 ml-2">
-                    {mockLease.property.name}
+                    {currentLease.property.name}
                   </Text>
                 </View>
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Address:</Text>
                   <Text className="font-medium text-gray-800 text-right flex-1 ml-2">
-                    {mockLease.property.address}
+                    {currentLease.property.address}
                   </Text>
                 </View>
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">City, State:</Text>
                   <Text className="font-medium text-gray-800">
-                    {mockLease.property.city}, {mockLease.property.state} {mockLease.property.zipCode}
+                    {currentLease.property.city}, {currentLease.property.state} {currentLease.property.postalCode}
                   </Text>
                 </View>
               </View>
@@ -133,27 +157,29 @@ export default function LeaseScreen() {
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Unit Number:</Text>
                   <Text className="font-medium text-gray-800">
-                    {mockLease.unit.number}
+                    {currentLease.unit.unitNumber}
                   </Text>
                 </View>
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Bedrooms:</Text>
                   <Text className="font-medium text-gray-800">
-                    {mockLease.unit.bedrooms}
+                    {currentLease.unit.bedrooms}
                   </Text>
                 </View>
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Bathrooms:</Text>
                   <Text className="font-medium text-gray-800">
-                    {mockLease.unit.bathrooms}
+                    {currentLease.unit.bathrooms}
                   </Text>
                 </View>
-                <View className="flex-row justify-between">
-                  <Text className="text-gray-600">Square Feet:</Text>
-                  <Text className="font-medium text-gray-800">
-                    {mockLease.unit.squareFeet} sq ft
-                  </Text>
-                </View>
+                {currentLease.unit.squareFeet && (
+                  <View className="flex-row justify-between">
+                    <Text className="text-gray-600">Square Feet:</Text>
+                    <Text className="font-medium text-gray-800">
+                      {currentLease.unit.squareFeet} sq ft
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
           </Card>
@@ -169,13 +195,13 @@ export default function LeaseScreen() {
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Monthly Rent:</Text>
                   <Text className="text-lg font-bold text-[#2D5A4A]">
-                    ${mockLease.terms.monthlyRent}
+                    UGX {parseFloat(currentLease.lease.monthlyRent).toLocaleString()}
                   </Text>
                 </View>
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Security Deposit:</Text>
                   <Text className="font-medium text-gray-800">
-                    ${mockLease.terms.deposit}
+                    UGX {parseFloat(currentLease.lease.deposit).toLocaleString()}
                   </Text>
                 </View>
               </View>
@@ -193,7 +219,7 @@ export default function LeaseScreen() {
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Name:</Text>
                   <Text className="font-medium text-gray-800">
-                    {mockLease.landlord.name}
+                    {currentLease.landlord.firstName} {currentLease.landlord.lastName}
                   </Text>
                 </View>
                 
@@ -201,7 +227,7 @@ export default function LeaseScreen() {
                   <Text className="text-gray-600">Email:</Text>
                   <View className="flex-row items-center space-x-2">
                     <Text className="font-medium text-[#2D5A4A]">
-                      {mockLease.landlord.email}
+                      {currentLease.landlord.email}
                     </Text>
                     <MaterialIcons name="email" size={16} color="#2D5A4A" />
                   </View>
@@ -211,7 +237,7 @@ export default function LeaseScreen() {
                   <Text className="text-gray-600">Phone:</Text>
                   <View className="flex-row items-center space-x-2">
                     <Text className="font-medium text-[#2D5A4A]">
-                      {mockLease.landlord.phone}
+                      {currentLease.landlord.phone}
                     </Text>
                     <MaterialIcons name="phone" size={16} color="#2D5A4A" />
                   </View>
@@ -227,33 +253,13 @@ export default function LeaseScreen() {
                 Lease Documents
               </Text>
               
-              <View className="space-y-0">
-                {mockLease.documents.map((document, index) => (
-                  <TouchableOpacity
-                    key={document.id}
-                    className="py-3 rounded-md active:bg-gray-50"
-                    onPress={() => handleDownloadDocument(document.id)}
-                  >
-                    <View className="flex-row justify-between items-center">
-                      <View className="flex-row items-center space-x-3 flex-1">
-                        <MaterialIcons name="description" size={20} color="#6B7280" />
-                        <View className="flex-1">
-                          <Text className="font-medium text-gray-800">
-                            {document.name}
-                          </Text>
-                          <Text className="text-sm text-gray-600">
-                            {new Date(document.date).toLocaleDateString()}
-                          </Text>
-                        </View>
-                      </View>
-                      <MaterialIcons name="download" size={20} color="#2D5A4A" />
-                    </View>
-                    
-                    {index < mockLease.documents.length - 1 && (
-                      <View className="border-t border-gray-200 mt-3" />
-                    )}
-                  </TouchableOpacity>
-                ))}
+              <View className="bg-yellow-50 p-3 rounded-md">
+                <View className="flex-row items-center space-x-2">
+                  <MaterialIcons name="info" size={20} color="#D97706" />
+                  <Text className="text-yellow-700 text-sm font-medium flex-1">
+                    Document management is coming soon. Contact your landlord for lease documents.
+                  </Text>
+                </View>
               </View>
             </View>
           </Card>
