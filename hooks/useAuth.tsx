@@ -4,6 +4,18 @@ import { User } from '../types';
 import { secureStorage } from '../lib/storage';
 import { authApi } from '../lib/api';
 
+interface UpdateUserRequest {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+}
+
+interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
@@ -11,6 +23,8 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUser: (userData: UpdateUserRequest) => Promise<void>;
+  changePassword: (passwordData: ChangePasswordRequest) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -85,6 +99,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const updateUser = async (userData: UpdateUserRequest) => {
+    try {
+      const updatedUser = await authApi.updateUser(userData);
+      setUser(updatedUser);
+      await secureStorage.setUser(updatedUser);
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  const changePassword = async (passwordData: ChangePasswordRequest) => {
+    try {
+      await authApi.changePassword(passwordData);
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -92,6 +124,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     logout,
     refreshUser,
+    updateUser,
+    changePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

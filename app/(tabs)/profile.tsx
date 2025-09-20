@@ -1,33 +1,59 @@
-import { ScrollView, View, Text, TouchableOpacity, Switch, Alert } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, Switch, Alert, Linking } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
+import { useSettings } from '../../hooks/useSettings';
 import { Card } from '../../components/ui/Card';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
+  const { settings, updateSetting } = useSettings();
   const router = useRouter();
-  const [notifications, setNotifications] = useState(true);
-  const [autoPayment, setAutoPayment] = useState(false);
 
   const handleLogout = async () => {
     await logout();
   };
 
   const handleEditProfile = () => {
-    // TODO: Navigate to edit profile screen
-    console.log('Edit profile');
+    router.push('/screens/edit-profile');
   };
 
   const handleChangePassword = () => {
-    // TODO: Navigate to change password screen
-    console.log('Change password');
+    router.push('/screens/change-password');
   };
 
-  const handleContactSupport = () => {
-    // TODO: Open support contact
-    console.log('Contact support');
+  const handleContactSupport = async () => {
+    const supportEmail = 'support@ndilandlord.com';
+    const subject = 'Support Request - NDI Landlord App';
+    const mailtoUrl = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}`;
+    
+    try {
+      const canOpen = await Linking.canOpenURL(mailtoUrl);
+      if (canOpen) {
+        await Linking.openURL(mailtoUrl);
+      } else {
+        Alert.alert(
+          'Email Support',
+          `Please send an email to ${supportEmail} for support.`,
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        'Contact Support',
+        `Email: ${supportEmail}\nPhone: +256 700 123 456`,
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const handleTermsOfService = () => {
+    router.push('/screens/terms-of-service');
+  };
+
+  const handlePrivacyPolicy = () => {
+    router.push('/screens/privacy-policy');
   };
 
   const handleNavigateToLease = () => {
@@ -195,10 +221,10 @@ export default function ProfileScreen() {
                   </View>
                 </View>
                 <Switch
-                  value={notifications}
-                  onValueChange={setNotifications}
+                  value={settings.pushNotifications}
+                  onValueChange={(value) => updateSetting('pushNotifications', value)}
                   trackColor={{ false: '#E5E7EB', true: '#2D5A4A' }}
-                  thumbColor={notifications ? '#ffffff' : '#9CA3AF'}
+                  thumbColor={settings.pushNotifications ? '#ffffff' : '#9CA3AF'}
                 />
               </View>
 
@@ -217,10 +243,10 @@ export default function ProfileScreen() {
                   </View>
                 </View>
                 <Switch
-                  value={autoPayment}
-                  onValueChange={setAutoPayment}
+                  value={settings.autoPayment}
+                  onValueChange={(value) => updateSetting('autoPayment', value)}
                   trackColor={{ false: '#E5E7EB', true: '#2D5A4A' }}
-                  thumbColor={autoPayment ? '#ffffff' : '#9CA3AF'}
+                  thumbColor={settings.autoPayment ? '#ffffff' : '#9CA3AF'}
                 />
               </View>
             </View>
@@ -246,7 +272,10 @@ export default function ProfileScreen() {
                 <MaterialIcons name="chevron-right" size={20} color="#6B7280" />
               </TouchableOpacity>
 
-              <TouchableOpacity className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100">
+              <TouchableOpacity 
+                className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100"
+                onPress={handleTermsOfService}
+              >
                 <View className="flex-row items-center space-x-3">
                   <MaterialIcons name="description" size={20} color="#6B7280" />
                   <Text className="font-medium text-gray-800">
@@ -256,7 +285,10 @@ export default function ProfileScreen() {
                 <MaterialIcons name="chevron-right" size={20} color="#6B7280" />
               </TouchableOpacity>
 
-              <TouchableOpacity className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100">
+              <TouchableOpacity 
+                className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100"
+                onPress={handlePrivacyPolicy}
+              >
                 <View className="flex-row items-center space-x-3">
                   <MaterialIcons name="privacy-tip" size={20} color="#6B7280" />
                   <Text className="font-medium text-gray-800">

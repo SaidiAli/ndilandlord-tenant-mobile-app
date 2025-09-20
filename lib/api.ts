@@ -70,6 +70,19 @@ api.interceptors.response.use(
   }
 );
 
+// User profile update types
+interface UpdateUserRequest {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+}
+
+interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 // Auth API functions
 export const authApi = {
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
@@ -120,6 +133,44 @@ export const authApi = {
       }
       
       throw new Error(error.message || 'Failed to get user data');
+    }
+  },
+
+  updateUser: async (userData: UpdateUserRequest): Promise<User> => {
+    try {
+      const response = await api.put<ApiResponse<User>>('/auth/profile', userData);
+      
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || 'Failed to update profile');
+      }
+      
+      return response.data.data;
+    } catch (error: any) {
+      if (error.response?.status === 400) {
+        throw new Error(error.response.data?.error || 'Invalid profile data');
+      } else if (error.response?.status === 409) {
+        throw new Error('Email already exists');
+      }
+      
+      throw new Error(error.message || 'Failed to update profile');
+    }
+  },
+
+  changePassword: async (passwordData: ChangePasswordRequest): Promise<void> => {
+    try {
+      const response = await api.put<ApiResponse<{ message: string }>>('/auth/change-password', passwordData);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to change password');
+      }
+    } catch (error: any) {
+      if (error.response?.status === 400) {
+        throw new Error(error.response.data?.error || 'Invalid password data');
+      } else if (error.response?.status === 401) {
+        throw new Error('Current password is incorrect');
+      }
+      
+      throw new Error(error.message || 'Failed to change password');
     }
   },
 };

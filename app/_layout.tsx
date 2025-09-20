@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '@/hooks/useAuth';
+import { SettingsProvider } from '@/hooks/useSettings';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import '@/global.css';
@@ -34,7 +35,8 @@ export default function RootLayout() {
     <GluestackUIProvider mode="light">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <SettingsProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -69,9 +71,26 @@ export default function RootLayout() {
                   headerTitleStyle: { fontWeight: 'bold' }
                 }} 
               />
+              <Stack.Screen 
+                name="screens/edit-profile" 
+                options={{ headerShown: false }} 
+              />
+              <Stack.Screen 
+                name="screens/change-password" 
+                options={{ headerShown: false }} 
+              />
+              <Stack.Screen 
+                name="screens/terms-of-service" 
+                options={{ headerShown: false }} 
+              />
+              <Stack.Screen 
+                name="screens/privacy-policy" 
+                options={{ headerShown: false }} 
+              />
             </Stack>
             <StatusBar style="light" backgroundColor="#2D5A4A" />
-          </ThemeProvider>
+            </ThemeProvider>
+          </SettingsProvider>
         </AuthProvider>
       </QueryClientProvider>
     </GluestackUIProvider>
