@@ -280,9 +280,54 @@ export const tenantApi = {
   },
 
   getLeaseInfo: async () => {
-    const response = await api.get<ApiResponse<LeaseApiResponse[]>>('/tenant/lease');
-    if (response.data?.data && Array.isArray(response.data.data)) {
-      return response.data.data.map(transformLeaseResponse);
+    const response = await api.get<ApiResponse<TenantDashboardData>>('/tenant/lease');
+    console.log(response.data)
+    if (response.data?.data) {
+      // Backend returns TenantDashboardData, not LeaseApiResponse[]
+      // Need to convert the structure to match what the mobile app expects
+      const data = response.data.data;
+      if (data.lease) {
+        // Convert TenantDashboardData.lease to LeaseApiResponse format
+        const leaseApiResponse: LeaseApiResponse = {
+          lease: {
+            id: data.lease.id,
+            startDate: data.lease.startDate,
+            endDate: data.lease.endDate,
+            monthlyRent: data.lease.monthlyRent.toString(),
+            deposit: data.lease.deposit.toString(),
+            status: data.lease.status as 'draft' | 'active' | 'expired' | 'terminated',
+            terms: data.lease.terms,
+            createdAt: new Date().toISOString(), // Backend doesn't provide this in lease info
+            updatedAt: new Date().toISOString(), // Backend doesn't provide this in lease info
+          },
+          tenant: undefined, // Not needed for tenant's own lease
+          unit: data.unit ? {
+            id: data.unit.id,
+            unitNumber: data.unit.unitNumber,
+            bedrooms: data.unit.bedrooms,
+            bathrooms: parseInt(data.unit.bathrooms), // Convert string to number
+            squareFeet: data.unit.squareFeet,
+            description: data.unit.description,
+          } : undefined,
+          property: data.property ? {
+            id: data.property.id,
+            name: data.property.name,
+            address: data.property.address,
+            city: data.property.city,
+            state: data.property.state,
+            postalCode: data.property.postalCode,
+            description: data.property.description,
+          } : undefined,
+          landlord: data.landlord ? {
+            id: '', // Backend doesn't provide landlord ID in this format
+            firstName: data.landlord.name.split(' ')[0] || '',
+            lastName: data.landlord.name.split(' ').slice(1).join(' ') || '',
+            phone: data.landlord.phone,
+            email: data.landlord.email || '',
+          } : undefined,
+        };
+        return [transformLeaseResponse(leaseApiResponse)];
+      }
     }
     return [];
   },

@@ -59,6 +59,7 @@ export interface Lease {
   updatedAt: string;
   unit?: Unit;
   tenant?: User;
+  landlord?: User;
   payments?: Payment[];
 }
 
@@ -222,6 +223,16 @@ export function transformLeaseResponse(response: LeaseApiResponse): Lease {
       role: 'tenant' as const,
       userName: tenant.userName,
       isActive: tenant.isActive,
+      createdAt: '',
+      updatedAt: '',
+    } : undefined,
+    landlord: landlord ? {
+      id: landlord.id,
+      firstName: landlord.firstName,
+      lastName: landlord.lastName,
+      email: landlord.email,
+      phone: landlord.phone,
+      role: 'landlord' as const,
       createdAt: '',
       updatedAt: '',
     } : undefined,
