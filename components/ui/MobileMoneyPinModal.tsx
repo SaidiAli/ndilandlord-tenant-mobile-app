@@ -50,12 +50,16 @@ export function MobileMoneyPinModal({
       setShowPin(false);
       setAttempts(0);
       
-      // Focus first input after a short delay
-      setTimeout(() => {
-        inputRefs.current[0]?.focus();
-      }, 300);
+      // Focus first input after modal animation completes
+      const timer = setTimeout(() => {
+        if (inputRefs.current[0] && !isLoading) {
+          inputRefs.current[0].focus();
+        }
+      }, 500);
+      
+      return () => clearTimeout(timer);
     }
-  }, [visible]);
+  }, [visible, isLoading]);
 
   useEffect(() => {
     if (error && attempts < maxAttempts) {
@@ -63,8 +67,13 @@ export function MobileMoneyPinModal({
       Vibration.vibrate(200);
       setAttempts(prev => prev + 1);
       
-      // Clear PIN on error
+      // Clear PIN on error and refocus first input
       setPin('');
+      setTimeout(() => {
+        if (inputRefs.current[0]) {
+          inputRefs.current[0].focus();
+        }
+      }, 100);
       
       // Show alert for too many attempts
       if (attempts + 1 >= maxAttempts) {
@@ -81,30 +90,38 @@ export function MobileMoneyPinModal({
     // Only allow digits
     if (!/^\d*$/.test(value)) return;
 
-    const newPin = pin.split('');
+    const newPin = [...pin.padEnd(4, '')];
     
-    if (value === '' && newPin[index]) {
-      // Handle backspace
+    if (value === '') {
+      // Handle backspace - clear current field and go to previous
       newPin[index] = '';
-      setPin(newPin.join(''));
+      const newPinString = newPin.join('').replace(/\s/g, '');
+      setPin(newPinString);
       
-      // Focus previous input
+      // Focus previous input if available
       if (index > 0) {
-        inputRefs.current[index - 1]?.focus();
+        setTimeout(() => {
+          inputRefs.current[index - 1]?.focus();
+        }, 10);
       }
     } else if (value.length === 1) {
       // Handle single digit input
       newPin[index] = value;
-      setPin(newPin.join(''));
+      const newPinString = newPin.join('').replace(/\s/g, '');
+      setPin(newPinString);
       
-      // Auto-focus next input
+      // Auto-focus next input if available
       if (index < 3) {
-        inputRefs.current[index + 1]?.focus();
+        setTimeout(() => {
+          inputRefs.current[index + 1]?.focus();
+        }, 10);
       }
       
       // Auto-submit when all 4 digits are entered
-      if (newPin.join('').length === 4) {
-        setTimeout(() => handleSubmit(newPin.join('')), 100);
+      if (newPinString.length === 4) {
+        setTimeout(() => {
+          handleSubmit(newPinString);
+        }, 200);
       }
     }
   };
@@ -117,18 +134,27 @@ export function MobileMoneyPinModal({
   };
 
   const handleKeyPress = (event: any, index: number) => {
-    if (event.nativeEvent.key === 'Backspace' && pin[index] === undefined && index > 0) {
-      // Handle backspace when current input is empty
-      const newPin = pin.split('');
-      newPin[index - 1] = '';
-      setPin(newPin.join(''));
-      inputRefs.current[index - 1]?.focus();
+    if (event.nativeEvent.key === 'Backspace') {
+      const currentValue = pin[index];
+      
+      if (!currentValue && index > 0) {
+        // If current field is empty, focus previous field and clear it
+        const newPin = [...pin.padEnd(4, '')];
+        newPin[index - 1] = '';
+        const newPinString = newPin.join('').replace(/\s/g, '');
+        setPin(newPinString);
+        
+        setTimeout(() => {
+          inputRefs.current[index - 1]?.focus();
+        }, 10);
+      }
     }
   };
 
   const renderPinInput = (index: number) => {
     const value = pin[index] || '';
     const hasValue = value !== '';
+    const hasError = error && attempts > 0;
     
     return (
       <TextInput
@@ -139,12 +165,19 @@ export function MobileMoneyPinModal({
         onKeyPress={(event) => handleKeyPress(event, index)}
         keyboardType="numeric"
         maxLength={1}
+        selectTextOnFocus={true}
+        autoCorrect={false}
+        autoCapitalize="none"
         secureTextEntry={false} // We handle masking manually
         className={`w-12 h-12 border-2 rounded-md text-center text-xl font-bold ${
           hasValue 
-            ? 'border-[#2D5A4A] bg-[#2D5A4A]/5' 
-            : 'border-gray-300 bg-white'
-        } ${error && attempts > 0 ? 'border-red-500' : ''}`}
+            ? hasError
+              ? 'border-red-500 bg-red-50'
+              : 'border-[#2D5A4A] bg-[#2D5A4A]/5' 
+            : hasError
+              ? 'border-red-500 bg-white'
+              : 'border-gray-300 bg-white'
+        }`}
         editable={!isLoading && attempts < maxAttempts}
       />
     );

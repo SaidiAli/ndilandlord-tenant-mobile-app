@@ -10,6 +10,8 @@ import { MobileMoneyPinModal } from '../../components/ui/MobileMoneyPinModal';
 import { PaymentStatusTracker } from '../../components/ui/PaymentStatusTracker';
 import { PaymentReceiptModal } from '../../components/ui/PaymentReceiptModal';
 import { useAuth } from '../../hooks/useAuth';
+import { useTenantLease } from '../../hooks/useTenantLease';
+import { useRetry } from '../../hooks/useRetry';
 import { paymentApi } from '../../lib/api';
 import { 
   PaymentBalance, 
@@ -29,6 +31,8 @@ import {
 
 export default function PaymentsScreen() {
   const { user } = useAuth();
+  const { leaseId, tenantData, isLoading: isLeaseLoading, error: leaseError } = useTenantLease();
+  const { execute: executeWithRetry, isRetrying } = useRetry({ maxAttempts: 3, retryDelay: 1000 });
   
   // Data states
   const [balance, setBalance] = useState<PaymentBalance | null>(null);
@@ -44,29 +48,57 @@ export default function PaymentsScreen() {
   const [currentPayment, setCurrentPayment] = useState<PaymentInitiationResponse | null>(null);
   const [selectedReceiptPaymentId, setSelectedReceiptPaymentId] = useState<string | null>(null);
 
-  // Mock lease ID - in a real app, this would come from user context or API
-  const TENANT_LEASE_ID = '74f63f60-4c8b-404a-8a37-45f03219138e';
+  // Get actual lease ID from tenant data
+  const actualLeaseId = leaseId;
 
   const fetchPaymentData = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setIsLoading(true);
       setError(null);
 
-      // Fetch balance and payment history in parallel
-      const [balanceData, paymentsData] = await Promise.all([
-        paymentApi.getBalance(TENANT_LEASE_ID),
-        paymentApi.getHistory(TENANT_LEASE_ID),
-      ]);
+      // Check if we have a valid lease ID
+      if (!actualLeaseId) {
+        throw new Error('No active lease found. Please contact your landlord.');
+      }
 
-      setBalance(balanceData);
-      setPayments(paymentsData);
+      // Fetch balance and payment history with retry mechanism
+      const result = await executeWithRetry(async () => {
+        const [balanceData, paymentsData] = await Promise.all([
+          paymentApi.getBalance(actualLeaseId),
+          paymentApi.getHistory(actualLeaseId),
+        ]);
+        return { balanceData, paymentsData };
+      });
+
+      setBalance(result.balanceData);
+      setPayments(result.paymentsData);
     } catch (err: any) {
       console.error('Failed to fetch payment data:', err);
-      setError(err.message || 'Failed to load payment information');
+      
+      // Provide more user-friendly error messages
+      let errorMessage = 'Failed to load payment information';
+      
+      if (err.message.includes('Network Error') || err.message.includes('connection')) {
+        errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
+      } else if (err.message.includes('timeout')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+      } else if (err.message.includes('401') || err.message.includes('unauthorized')) {
+        errorMessage = 'Session expired. Please log in again.';
+      } else if (err.message.includes('403') || err.message.includes('forbidden')) {
+        errorMessage = 'Access denied. Please contact support.';
+      } else if (err.message.includes('404')) {
+        errorMessage = 'Payment information not found. Please contact support.';
+      } else if (err.message.includes('500')) {
+        errorMessage = 'Server error. Please try again in a few moments.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       if (showLoading) setIsLoading(false);
     }
-  }, []);
+  }, [actualLeaseId, executeWithRetry]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -74,16 +106,20 @@ export default function PaymentsScreen() {
     setIsRefreshing(false);
   }, [fetchPaymentData]);
 
-  // Fetch data on component mount and focus
+  // Fetch data when lease ID becomes available
   useEffect(() => {
-    fetchPaymentData();
-  }, []);
+    if (actualLeaseId) {
+      fetchPaymentData();
+    }
+  }, [actualLeaseId, fetchPaymentData]);
 
   useFocusEffect(
     useCallback(() => {
-      // Refresh when screen comes into focus
-      fetchPaymentData(false);
-    }, [])
+      // Refresh when screen comes into focus and we have a lease ID
+      if (actualLeaseId) {
+        fetchPaymentData(false);
+      }
+    }, [actualLeaseId, fetchPaymentData])
   );
 
   const handlePayNow = useCallback(() => {
@@ -96,26 +132,36 @@ export default function PaymentsScreen() {
   }, [balance]);
 
   const handleAmountConfirm = useCallback(async (amount: number) => {
-    if (!balance) return;
+    if (!balance || !actualLeaseId) {
+      Alert.alert('Error', 'Payment information not available. Please try again.');
+      return;
+    }
 
     try {
-      setPaymentFlow(prev => ({ ...prev, amount, isLoading: true }));
+      setPaymentFlow(prev => ({ ...prev, amount, isLoading: true, error: undefined }));
 
-      // For demo purposes, use a default phone number
-      const phoneNumber = user?.phone || '256700654321';
+      // Use tenant phone number from the lease data or user profile
+      const phoneNumber = tenantData?.tenant?.phone || user?.phone;
+      
+      if (!phoneNumber) {
+        throw new Error('Phone number not found. Please update your profile.');
+      }
+      
       const normalizedPhone = normalizePhoneNumber(phoneNumber);
       const provider = getMobileMoneyProvider(normalizedPhone);
       
-      const providerName = provider === 'mtn' ? 'MTN MoMo' : 
-                          provider === 'airtel' ? 'Airtel Money' : 
-                          'Mobile Money';
+      if (provider === 'unknown') {
+        throw new Error('Unsupported phone number. Please use MTN or Airtel mobile money.');
+      }
+      
+      const providerName = provider === 'mtn' ? 'MTN MoMo' : 'Airtel Money';
 
       setPaymentFlow(prev => ({
         ...prev,
         phoneNumber: normalizedPhone,
         paymentMethod: {
-          id: provider === 'unknown' ? 'mtn' : provider,
-          name: provider === 'unknown' ? 'mtn' : provider,
+          id: provider,
+          name: provider,
           displayName: providerName,
           color: provider === 'mtn' ? '#FFCB05' : '#E51A1A',
           icon: 'phone-android',
@@ -123,66 +169,95 @@ export default function PaymentsScreen() {
         },
         step: 'pin-entry',
         isLoading: false,
+        error: undefined,
       }));
 
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to proceed with payment');
-      setPaymentFlow(prev => ({ ...prev, isLoading: false }));
+      setPaymentFlow(prev => ({ ...prev, isLoading: false, error: err.message }));
     }
-  }, [balance, user?.phone]);
+  }, [balance, tenantData?.tenant?.phone, user?.phone, actualLeaseId]);
 
   const handlePinConfirm = useCallback(async (pin: string) => {
-    setPaymentFlow(prev => {
-      const { amount, phoneNumber } = prev;
+    // Get current payment flow state
+    const { amount, phoneNumber } = paymentFlow;
+    
+    if (!balance || !amount || !phoneNumber || !actualLeaseId) {
+      Alert.alert('Error', 'Missing payment information. Please try again.');
+      return;
+    }
+
+    try {
+      // Set loading state
+      setPaymentFlow(prev => ({ ...prev, isLoading: true, error: undefined }));
+
+      // Initiate payment with retry mechanism
+      const paymentResponse = await executeWithRetry(async () => {
+        return await paymentApi.initiate({
+          leaseId: actualLeaseId,
+          amount,
+          phoneNumber,
+          paymentMethod: 'mobile_money',
+        });
+      });
+
+      // Update state with payment response
+      setCurrentPayment(paymentResponse);
+      setPaymentFlow(prev => ({
+        ...prev,
+        transactionId: paymentResponse.transactionId,
+        step: 'processing',
+        isLoading: false,
+        error: undefined,
+      }));
+
+    } catch (err: any) {
+      console.error('Payment initiation failed:', err);
       
-      if (!balance || !amount || !phoneNumber) return prev;
-
-      // Start async payment process
-      (async () => {
-        try {
-          setPaymentFlow(current => ({ ...current, isLoading: true, error: undefined }));
-
-          // Initiate payment
-          const paymentResponse = await paymentApi.initiate({
-            leaseId: TENANT_LEASE_ID,
-            amount,
-            phoneNumber,
-            paymentMethod: 'mobile_money',
-          });
-
-          setCurrentPayment(paymentResponse);
-          setPaymentFlow(current => ({
-            ...current,
-            transactionId: paymentResponse.transactionId,
-            step: 'processing',
-            isLoading: false,
-          }));
-
-        } catch (err: any) {
-          console.error('Payment initiation failed:', err);
-          setPaymentFlow(current => ({ 
-            ...current, 
-            error: err.message || 'Payment failed. Please try again.',
-            isLoading: false 
-          }));
-        }
-      })();
-
-      return { ...prev, isLoading: true, error: undefined };
-    });
-  }, [balance]);
+      // Provide user-friendly error messages
+      let errorMessage = 'Payment failed. Please try again.';
+      
+      if (err.message.includes('Network Error') || err.message.includes('connection')) {
+        errorMessage = 'Connection failed. Please check your internet and try again.';
+      } else if (err.message.includes('timeout')) {
+        errorMessage = 'Request timed out. Please try again.';
+      } else if (err.message.includes('Invalid payment data')) {
+        errorMessage = 'Invalid payment information. Please check your details.';
+      } else if (err.message.includes('Insufficient funds')) {
+        errorMessage = 'Insufficient funds in your mobile money account.';
+      } else if (err.message.includes('Phone number')) {
+        errorMessage = 'Invalid phone number. Please check your mobile money number.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setPaymentFlow(prev => ({ 
+        ...prev, 
+        error: errorMessage,
+        isLoading: false 
+      }));
+    }
+  }, [balance, paymentFlow, actualLeaseId]);
 
   const handlePaymentSuccess = useCallback((status: PaymentStatusResponse) => {
-    setPaymentFlow(prev => ({ ...prev, step: 'success' }));
+    setPaymentFlow(prev => ({ 
+      ...prev, 
+      step: 'success',
+      error: undefined,
+      isLoading: false 
+    }));
     // Refresh payment data to show updated balance
-    fetchPaymentData(false);
+    setTimeout(() => {
+      fetchPaymentData(false);
+    }, 1000);
   }, [fetchPaymentData]);
 
   const handlePaymentFailed = useCallback((status: PaymentStatusResponse) => {
     setPaymentFlow(prev => ({ 
       ...prev, 
       step: 'failed',
-      error: status.statusMessage || 'Payment failed'
+      error: status.statusMessage || 'Payment failed',
+      isLoading: false
     }));
   }, []);
 
@@ -190,22 +265,66 @@ export default function PaymentsScreen() {
     setPaymentFlow(prev => ({ 
       ...prev, 
       step: 'failed',
-      error: 'Payment processing timed out. Please check your payment status manually.'
+      error: 'Payment processing timed out. Please check your payment status or try again.',
+      isLoading: false
     }));
   }, []);
 
   const closePaymentFlow = useCallback(() => {
-    setPaymentFlow({ step: 'idle' });
+    setPaymentFlow({ 
+      step: 'idle',
+      isLoading: false,
+      error: undefined 
+    });
     setCurrentPayment(null);
   }, []);
 
   const retryPayment = useCallback(() => {
-    setPaymentFlow({ step: 'amount-selection' });
+    setPaymentFlow({ 
+      step: 'amount-selection',
+      isLoading: false,
+      error: undefined 
+    });
     setCurrentPayment(null);
   }, []);
 
-  if (isLoading) {
-    return <LoadingSpinner message="Loading payment information..." />;
+  if (isLeaseLoading || isLoading) {
+    const message = isRetrying ? "Retrying connection..." : "Loading payment information...";
+    return <LoadingSpinner message={message} />;
+  }
+
+  if (leaseError) {
+    return (
+      <View className="flex-1 bg-gray-50 justify-center items-center px-4">
+        <MaterialIcons name="error" size={48} color="#EF4444" />
+        <Text className="text-lg font-semibold text-gray-800 mt-4 text-center">
+          Unable to Load Lease Information
+        </Text>
+        <Text className="text-gray-600 mt-2 text-center">
+          {leaseError}
+        </Text>
+        <TouchableOpacity
+          onPress={() => fetchPaymentData()}
+          className="bg-[#2D5A4A] px-6 py-3 rounded-md mt-4"
+        >
+          <Text className="text-white font-semibold">Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!actualLeaseId) {
+    return (
+      <View className="flex-1 bg-gray-50 justify-center items-center px-4">
+        <MaterialIcons name="home" size={48} color="#6B7280" />
+        <Text className="text-lg font-semibold text-gray-800 mt-4 text-center">
+          No Active Lease Found
+        </Text>
+        <Text className="text-gray-600 mt-2 text-center">
+          You don't have an active lease. Please contact your landlord.
+        </Text>
+      </View>
+    );
   }
 
   if (error && !balance) {
@@ -215,15 +334,28 @@ export default function PaymentsScreen() {
         <Text className="text-lg font-semibold text-gray-800 mt-4 text-center">
           Unable to Load Payments
         </Text>
-        <Text className="text-gray-600 mt-2 text-center">
+        <Text className="text-gray-600 mt-2 text-center mb-4">
           {error}
         </Text>
+        {isRetrying && (
+          <Text className="text-sm text-blue-600 mb-2">
+            Retrying connection...
+          </Text>
+        )}
         <TouchableOpacity
           onPress={() => fetchPaymentData()}
-          className="bg-[#2D5A4A] px-6 py-3 rounded-md mt-4"
+          disabled={isRetrying}
+          className={`px-6 py-3 rounded-md mt-2 ${
+            isRetrying ? 'bg-gray-400' : 'bg-[#2D5A4A]'
+          }`}
         >
-          <Text className="text-white font-semibold">Retry</Text>
+          <Text className="text-white font-semibold">
+            {isRetrying ? 'Retrying...' : 'Try Again'}
+          </Text>
         </TouchableOpacity>
+        <Text className="text-xs text-gray-500 mt-2 text-center">
+          Check your internet connection and try again
+        </Text>
       </View>
     );
   }

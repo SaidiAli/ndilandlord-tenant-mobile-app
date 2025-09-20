@@ -25,6 +25,8 @@ export function PaymentStatusTracker({
   className = ''
 }: PaymentStatusTrackerProps) {
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const [elapsed, setElapsed] = React.useState(0);
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const { status, isPolling, error, startPolling, stopPolling } = usePaymentStatus({
     transactionId,
@@ -35,11 +37,19 @@ export function PaymentStatusTracker({
         onTimeout();
       }
     },
+    pollingInterval: 3000, // Poll every 3 seconds for better responsiveness
+    maxPollingDuration: 120000, // 2 minutes timeout
   });
 
   useEffect(() => {
     if (transactionId) {
       startPolling();
+      setElapsed(0);
+      
+      // Start elapsed time counter
+      timerRef.current = setInterval(() => {
+        setElapsed(prev => prev + 1);
+      }, 1000);
       
       // Fade in animation
       Animated.timing(fadeAnim, {
@@ -51,8 +61,20 @@ export function PaymentStatusTracker({
 
     return () => {
       stopPolling();
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [transactionId, startPolling, stopPolling, fadeAnim]);
+
+  // Stop timer when polling stops
+  useEffect(() => {
+    if (!isPolling && timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, [isPolling]);
 
   const getStatusInfo = () => {
     if (error) {
@@ -66,11 +88,15 @@ export function PaymentStatusTracker({
     }
 
     if (!status || status.status === 'Pending') {
+      const message = elapsed > 30 
+        ? 'Payment is taking longer than usual. Please keep this screen open.' 
+        : 'Please confirm the payment on your mobile money app and wait...';
+      
       return {
         icon: 'hourglass-empty' as const,
         color: '#F59E0B',
         title: 'Processing Payment',
-        message: 'Please wait while we process your payment...',
+        message,
         showRetry: false,
       };
     }
@@ -212,12 +238,24 @@ export function PaymentStatusTracker({
           {isPolling && !error && (
             <View className="w-full">
               <View className="flex-row justify-between items-center mb-2">
-                <Text className="text-xs text-gray-500">Processing...</Text>
+                <Text className="text-xs text-gray-500">
+                  Processing... {Math.floor(elapsed / 60)}:{(elapsed % 60).toString().padStart(2, '0')}
+                </Text>
                 <Text className="text-xs text-gray-500">Up to 2 min</Text>
               </View>
-              <View className="w-full bg-gray-200 rounded-full h-1">
-                <View className="bg-[#2D5A4A] h-1 rounded-full animate-pulse" style={{ width: '60%' }} />
+              <View className="w-full bg-gray-200 rounded-full h-2">
+                <View 
+                  className="bg-[#2D5A4A] h-2 rounded-full transition-all duration-1000" 
+                  style={{ 
+                    width: `${Math.min((elapsed / 120) * 100, 95)}%` // 120 seconds = 2 minutes
+                  }} 
+                />
               </View>
+              {elapsed > 90 && (
+                <Text className="text-xs text-amber-600 mt-1 text-center">
+                  Payment taking longer than usual...
+                </Text>
+              )}
             </View>
           )}
         </View>
