@@ -313,6 +313,7 @@ export interface PaymentInitiationRequest {
   amount: number;
   phoneNumber?: string;
   paymentMethod?: 'mobile_money';
+  provider: 'mtn' | 'airtel' | 'm-sente';
 }
 
 export interface PaymentInitiationResponse {

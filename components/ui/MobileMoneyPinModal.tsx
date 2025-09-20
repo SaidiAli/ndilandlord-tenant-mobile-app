@@ -40,7 +40,7 @@ export function MobileMoneyPinModal({
   const [showPin, setShowPin] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const maxAttempts = 3;
-  
+
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
   useEffect(() => {
@@ -49,14 +49,14 @@ export function MobileMoneyPinModal({
       setPin('');
       setShowPin(false);
       setAttempts(0);
-      
+
       // Focus first input after modal animation completes
       const timer = setTimeout(() => {
         if (inputRefs.current[0] && !isLoading) {
           inputRefs.current[0].focus();
         }
       }, 500);
-      
+
       return () => clearTimeout(timer);
     }
   }, [visible, isLoading]);
@@ -66,7 +66,7 @@ export function MobileMoneyPinModal({
       // Vibrate on error
       Vibration.vibrate(200);
       setAttempts(prev => prev + 1);
-      
+
       // Clear PIN on error and refocus first input
       setPin('');
       setTimeout(() => {
@@ -74,7 +74,7 @@ export function MobileMoneyPinModal({
           inputRefs.current[0].focus();
         }
       }, 100);
-      
+
       // Show alert for too many attempts
       if (attempts + 1 >= maxAttempts) {
         Alert.alert(
@@ -91,13 +91,13 @@ export function MobileMoneyPinModal({
     if (!/^\d*$/.test(value)) return;
 
     const newPin = [...pin.padEnd(4, '')];
-    
+
     if (value === '') {
       // Handle backspace - clear current field and go to previous
       newPin[index] = '';
       const newPinString = newPin.join('').replace(/\s/g, '');
       setPin(newPinString);
-      
+
       // Focus previous input if available
       if (index > 0) {
         setTimeout(() => {
@@ -109,14 +109,14 @@ export function MobileMoneyPinModal({
       newPin[index] = value;
       const newPinString = newPin.join('').replace(/\s/g, '');
       setPin(newPinString);
-      
+
       // Auto-focus next input if available
       if (index < 3) {
         setTimeout(() => {
           inputRefs.current[index + 1]?.focus();
         }, 10);
       }
-      
+
       // Auto-submit when all 4 digits are entered
       if (newPinString.length === 4) {
         setTimeout(() => {
@@ -136,14 +136,14 @@ export function MobileMoneyPinModal({
   const handleKeyPress = (event: any, index: number) => {
     if (event.nativeEvent.key === 'Backspace') {
       const currentValue = pin[index];
-      
+
       if (!currentValue && index > 0) {
         // If current field is empty, focus previous field and clear it
         const newPin = [...pin.padEnd(4, '')];
         newPin[index - 1] = '';
         const newPinString = newPin.join('').replace(/\s/g, '');
         setPin(newPinString);
-        
+
         setTimeout(() => {
           inputRefs.current[index - 1]?.focus();
         }, 10);
@@ -155,10 +155,11 @@ export function MobileMoneyPinModal({
     const value = pin[index] || '';
     const hasValue = value !== '';
     const hasError = error && attempts > 0;
-    
+
     return (
       <TextInput
         key={index}
+        // @ts-ignore
         ref={(ref) => (inputRefs.current[index] = ref)}
         value={showPin ? value : hasValue ? '•' : ''}
         onChangeText={(text) => handlePinChange(text, index)}
@@ -169,15 +170,14 @@ export function MobileMoneyPinModal({
         autoCorrect={false}
         autoCapitalize="none"
         secureTextEntry={false} // We handle masking manually
-        className={`w-12 h-12 border-2 rounded-md text-center text-xl font-bold ${
-          hasValue 
+        className={`w-12 h-12 border-2 rounded-md text-center text-xl font-bold ${hasValue
             ? hasError
               ? 'border-red-500 bg-red-50'
-              : 'border-[#2D5A4A] bg-[#2D5A4A]/5' 
+              : 'border-[#2D5A4A] bg-[#2D5A4A]/5'
             : hasError
               ? 'border-red-500 bg-white'
               : 'border-gray-300 bg-white'
-        }`}
+          }`}
         editable={!isLoading && attempts < maxAttempts}
       />
     );
@@ -194,7 +194,7 @@ export function MobileMoneyPinModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
@@ -219,7 +219,7 @@ export function MobileMoneyPinModal({
                 <View className="w-16 h-16 bg-[#2D5A4A] rounded-full items-center justify-center">
                   <MaterialIcons name="phone-android" size={32} color="white" />
                 </View>
-                
+
                 <View className="items-center space-y-2">
                   <Text className="text-xl font-bold text-gray-800">
                     {formatUGX(amount)}
@@ -247,10 +247,10 @@ export function MobileMoneyPinModal({
                 className="flex-row items-center space-x-2"
                 disabled={isLoading}
               >
-                <MaterialIcons 
-                  name={showPin ? 'visibility-off' : 'visibility'} 
-                  size={20} 
-                  color="#6B7280" 
+                <MaterialIcons
+                  name={showPin ? 'visibility-off' : 'visibility'}
+                  size={20}
+                  color="#6B7280"
                 />
                 <Text className="text-gray-600">
                   {showPin ? 'Hide' : 'Show'} PIN
@@ -295,11 +295,10 @@ export function MobileMoneyPinModal({
               <TouchableOpacity
                 onPress={() => handleSubmit()}
                 disabled={pin.length !== 4 || isLoading || attempts >= maxAttempts}
-                className={`py-3 rounded-md items-center ${
-                  (pin.length !== 4 || isLoading || attempts >= maxAttempts)
+                className={`py-3 rounded-md items-center ${(pin.length !== 4 || isLoading || attempts >= maxAttempts)
                     ? 'bg-gray-300'
                     : 'bg-[#2D5A4A]'
-                }`}
+                  }`}
               >
                 <Text className="text-white font-semibold text-lg">
                   {isLoading ? 'Processing...' : 'Confirm Payment'}

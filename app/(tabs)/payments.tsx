@@ -32,7 +32,7 @@ import {
 export default function PaymentsScreen() {
   const { user } = useAuth();
   const { leaseId, tenantData, isLoading: isLeaseLoading, error: leaseError } = useTenantLease();
-  const { execute: executeWithRetry, isRetrying } = useRetry({ maxAttempts: 3, retryDelay: 1000 });
+  const { execute: executeWithRetry, isRetrying } = useRetry<any>({ maxAttempts: 3, retryDelay: 1000 });
   
   // Data states
   const [balance, setBalance] = useState<PaymentBalance | null>(null);
@@ -191,12 +191,21 @@ export default function PaymentsScreen() {
       // Set loading state
       setPaymentFlow(prev => ({ ...prev, isLoading: true, error: undefined }));
 
+      console.log('Initiating payment with amount:', {
+        leaseId: actualLeaseId,
+        amount,
+        phoneNumber,
+        provider: 'mtn',
+        paymentMethod: 'mobile_money',
+      })
+
       // Initiate payment with retry mechanism
       const paymentResponse = await executeWithRetry(async () => {
         return await paymentApi.initiate({
           leaseId: actualLeaseId,
           amount,
           phoneNumber,
+          provider: 'mtn',
           paymentMethod: 'mobile_money',
         });
       });
