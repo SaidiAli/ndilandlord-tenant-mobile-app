@@ -13,7 +13,8 @@ import {
   PaymentReceipt,
   PaymentWithDetails,
   LeaseApiResponse,
-  transformLeaseResponse
+  transformLeaseResponse,
+  TenantDashboardData
 } from '../types';
 
 import { Platform } from 'react-native';
@@ -27,10 +28,6 @@ const getApiUrl = () => {
   if (Platform.OS === 'android') {
     baseUrl = 'http://10.0.2.2:4000/api';
   }
-  
-  // For iOS simulator, localhost should work
-  // For physical device, you'll need your computer's IP address like:
-  // baseUrl = 'http://YOUR_IP_ADDRESS:4000/api';
   
   return baseUrl;
 };
@@ -77,13 +74,8 @@ api.interceptors.response.use(
 export const authApi = {
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
     try {
-      // Transform username to userName for backend compatibility
-      const requestData: LoginRequestBackend = {
-        userName: credentials.username,
-        password: credentials.password,
-      };
       
-      const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', requestData);
+      const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', credentials);
       
       if (!response.data.success || !response.data.data) {
         throw new Error(response.data.error || 'Login failed');
@@ -266,9 +258,25 @@ export const paymentApi = {
 
 // Tenant-specific API functions
 export const tenantApi = {
-  getDashboard: async () => {
-    const response = await api.get('/tenant/dashboard');
-    return response.data;
+  getDashboard: async (): Promise<TenantDashboardData> => {
+    try {
+      const response = await api.get<ApiResponse<TenantDashboardData>>('/tenant/dashboard');
+      
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || 'Failed to get dashboard data');
+      }
+      
+      return response.data.data;
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        throw new Error('No active lease found. Please contact your landlord.');
+      } else if (error.response?.status === 404) {
+        throw new Error('Tenant data not found. Please contact support.');
+      } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+        throw new Error('Unable to connect to server. Please check your connection.');
+      }
+      throw new Error(error.message || 'Failed to get dashboard data');
+    }
   },
 
   getLeaseInfo: async () => {

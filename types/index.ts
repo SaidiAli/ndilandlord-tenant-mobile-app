@@ -237,6 +237,65 @@ export interface TenantDashboard {
   propertyInfo?: Property & { unit: Unit };
 }
 
+// Backend Dashboard API Response Type (matches TenantService.getTenantDashboard response)
+export interface TenantDashboardData {
+  tenant: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+    phone: string;
+  };
+  lease: {
+    id: string;
+    startDate: string;
+    endDate: string;
+    monthlyRent: number;
+    deposit: number;
+    status: string;
+    terms?: string;
+  } | null;
+  unit: {
+    id: string;
+    unitNumber: string;
+    bedrooms: number;
+    bathrooms: string;
+    squareFeet?: number;
+    description?: string;
+  } | null;
+  property: {
+    id: string;
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    description?: string;
+  } | null;
+  payments: {
+    currentBalance: number;
+    nextDueDate?: string;
+    isOverdue: boolean;
+    minimumPayment: number;
+    recentPayments: Array<{
+      payment: any;
+      lease: any;
+      tenant: any;
+    }>;
+  };
+  quickStats: {
+    daysInLease: number;
+    paymentsOnTime: number;
+    totalPaid: number;
+    leaseProgress: number;
+  };
+  landlord: {
+    name: string;
+    phone: string;
+    email?: string;
+  } | null;
+}
+
 // Payment System Types
 export interface PaymentBalance {
   leaseId: string;
