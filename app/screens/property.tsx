@@ -50,12 +50,10 @@ const mockMaintenanceRequests = [
 export default function PropertyScreen() {
   const handleEmergencyCall = () => {
     // TODO: Implement phone call
-    console.log('Emergency call');
   };
 
   const handleSubmitMaintenance = () => {
     // TODO: Navigate to maintenance form
-    console.log('Submit maintenance request');
   };
 
   return (

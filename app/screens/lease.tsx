@@ -18,7 +18,6 @@ export default function LeaseScreen() {
   });
 
   useEffect(() => {
-    console.log(leases);
     if (leases && leases.length > 0) {
       // Get the most recent active lease
       const activeLease = leases.find(lease => lease.status === 'active');

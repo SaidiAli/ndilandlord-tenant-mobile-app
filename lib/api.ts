@@ -332,7 +332,6 @@ export const tenantApi = {
 
   getLeaseInfo: async () => {
     const response = await api.get<ApiResponse<TenantDashboardData>>('/tenant/lease');
-    console.log(response.data)
     if (response.data?.data) {
       // Backend returns TenantDashboardData, not LeaseApiResponse[]
       // Need to convert the structure to match what the mobile app expects

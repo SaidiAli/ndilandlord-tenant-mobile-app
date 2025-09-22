@@ -191,14 +191,6 @@ export default function PaymentsScreen() {
       // Set loading state
       setPaymentFlow(prev => ({ ...prev, isLoading: true, error: undefined }));
 
-      console.log('Initiating payment with amount:', {
-        leaseId: actualLeaseId,
-        amount,
-        phoneNumber,
-        provider: 'mtn',
-        paymentMethod: 'mobile_money',
-      })
-
       // Initiate payment with retry mechanism
       const paymentResponse = await executeWithRetry(async () => {
         return await paymentApi.initiate({

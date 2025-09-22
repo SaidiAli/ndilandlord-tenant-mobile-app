@@ -57,17 +57,14 @@ const quickActions = [
 export default function HelpScreen() {
   const handleTopicPress = (topicId: string) => {
     // TODO: Navigate to help topic detail or open relevant screen
-    console.log('Open help topic:', topicId);
   };
 
   const handleQuickAction = (actionId: string) => {
     // TODO: Navigate to appropriate screen based on action
-    console.log('Quick action:', actionId);
   };
 
   const handleContactSupport = () => {
     // TODO: Open support contact options
-    console.log('Contact support');
   };
 
   const openWebsite = () => {
