@@ -4,7 +4,6 @@ import {
   ApiResponse, 
   AuthResponse, 
   LoginRequest, 
-  LoginRequestBackend, 
   User,
   PaymentBalance,
   PaymentInitiationRequest,
@@ -19,22 +18,22 @@ import {
 
 import { Platform } from 'react-native';
 
+let apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
 // Get the correct API URL based on platform
 const getApiUrl = () => {
-  // Default to localhost
-  let baseUrl = 'http://192.168.100.30:4000/api';
   
   // For Android emulator, use 10.0.2.2 instead of localhost
   if (Platform.OS === 'android') {
-    baseUrl = 'http://10.0.2.2:4000/api';
+    apiUrl = 'http://10.0.2.2:4000/api';
   }
   
-  return baseUrl;
+  return apiUrl;
 };
 
 // Create axios instance
 const api = axios.create({
-  baseURL: getApiUrl(),
+  baseURL: 'http://dcgc8okokso0ko88cwwgogo0.75.119.138.78.sslip.io/api',
   headers: {
     'Content-Type': 'application/json',
   },
