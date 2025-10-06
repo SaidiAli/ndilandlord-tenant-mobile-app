@@ -16,20 +16,7 @@ import {
   TenantDashboardData
 } from '../types';
 
-import { Platform } from 'react-native';
-
-let apiUrl = process.env.EXPO_PUBLIC_API_URL;
-
-// Get the correct API URL based on platform
-const getApiUrl = () => {
-  
-  // For Android emulator, use 10.0.2.2 instead of localhost
-  if (Platform.OS === 'android') {
-    apiUrl = 'http://10.0.2.2:4000/api';
-  }
-  
-  return apiUrl;
-};
+import * as Sentry from '@sentry/react-native';
 
 // Create axios instance
 const api = axios.create({
@@ -64,7 +51,11 @@ api.interceptors.response.use(
       // Token expired or invalid
       await secureStorage.clear();
       // Note: Navigation will be handled by the auth context
+
+      Sentry.captureException(error);
     }
+
+    Sentry.captureException(error);
     return Promise.reject(error);
   }
 );
