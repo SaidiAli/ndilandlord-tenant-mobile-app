@@ -20,7 +20,8 @@ import * as Sentry from '@sentry/react-native';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: 'https://dcgc8okokso0ko88cwwgogo0.aptusagency.com/api',
+  baseURL: 'http://192.168.100.60:4000/api',
+  // baseURL: 'https://dcgc8okokso0ko88cwwgogo0.aptusagency.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
