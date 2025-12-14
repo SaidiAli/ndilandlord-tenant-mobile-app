@@ -4,50 +4,51 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
+import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
 
 export default function ChangePasswordScreen() {
   const { changePassword } = useAuth();
   const router = useRouter();
-  
+
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
-  
+
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
     confirm: false,
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.currentPassword) {
       newErrors.currentPassword = 'Current password is required';
     }
-    
+
     if (!formData.newPassword) {
       newErrors.newPassword = 'New password is required';
     } else if (formData.newPassword.length < 6) {
       newErrors.newPassword = 'Password must be at least 6 characters';
     }
-    
+
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your new password';
     } else if (formData.newPassword !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-    
-    if (formData.currentPassword && formData.newPassword && 
-        formData.currentPassword === formData.newPassword) {
+
+    if (formData.currentPassword && formData.newPassword &&
+      formData.currentPassword === formData.newPassword) {
       newErrors.newPassword = 'New password must be different from current password';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -63,13 +64,13 @@ export default function ChangePasswordScreen() {
         currentPassword: formData.currentPassword,
         newPassword: formData.newPassword,
       });
-      
+
       Alert.alert(
-        'Success', 
+        'Success',
         'Password changed successfully.',
         [{ text: 'OK', onPress: () => router.back() }]
       );
-      
+
       // Clear form
       setFormData({
         currentPassword: '',
@@ -107,7 +108,7 @@ export default function ChangePasswordScreen() {
   const passwordStrength = getPasswordStrength(formData.newPassword);
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <SafeAreaWrapper>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="px-4 pt-6 pb-4">
           {/* Header */}
@@ -119,11 +120,11 @@ export default function ChangePasswordScreen() {
               <MaterialIcons name="arrow-back" size={24} color="#374151" />
               <Text className="text-lg font-medium text-gray-700">Back</Text>
             </TouchableOpacity>
-            
+
             <Text className="text-xl font-semibold text-gray-800">
               Change Password
             </Text>
-            
+
             <View className="w-20" />
           </View>
 
@@ -136,7 +137,7 @@ export default function ChangePasswordScreen() {
                   Security Notice
                 </Text>
                 <Text className="text-sm text-gray-600">
-                  Choose a strong password that you haven't used before. 
+                  Choose a strong password that you haven't used before.
                   Your password should be at least 6 characters long.
                 </Text>
               </View>
@@ -160,9 +161,8 @@ export default function ChangePasswordScreen() {
                         setErrors(prev => ({ ...prev, currentPassword: '' }));
                       }
                     }}
-                    className={`border rounded-md px-3 py-3 pr-12 bg-white ${
-                      errors.currentPassword ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`border rounded-md px-3 py-3 pr-12 bg-white ${errors.currentPassword ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     placeholder="Enter your current password"
                     secureTextEntry={!showPasswords.current}
                     autoCapitalize="none"
@@ -171,10 +171,10 @@ export default function ChangePasswordScreen() {
                     onPress={() => togglePasswordVisibility('current')}
                     className="absolute right-3 top-3"
                   >
-                    <MaterialIcons 
-                      name={showPasswords.current ? "visibility-off" : "visibility"} 
-                      size={20} 
-                      color="#6B7280" 
+                    <MaterialIcons
+                      name={showPasswords.current ? "visibility-off" : "visibility"}
+                      size={20}
+                      color="#6B7280"
                     />
                   </TouchableOpacity>
                 </View>
@@ -199,9 +199,8 @@ export default function ChangePasswordScreen() {
                         setErrors(prev => ({ ...prev, newPassword: '' }));
                       }
                     }}
-                    className={`border rounded-md px-3 py-3 pr-12 bg-white ${
-                      errors.newPassword ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`border rounded-md px-3 py-3 pr-12 bg-white ${errors.newPassword ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     placeholder="Enter your new password"
                     secureTextEntry={!showPasswords.new}
                     autoCapitalize="none"
@@ -210,25 +209,24 @@ export default function ChangePasswordScreen() {
                     onPress={() => togglePasswordVisibility('new')}
                     className="absolute right-3 top-3"
                   >
-                    <MaterialIcons 
-                      name={showPasswords.new ? "visibility-off" : "visibility"} 
-                      size={20} 
-                      color="#6B7280" 
+                    <MaterialIcons
+                      name={showPasswords.new ? "visibility-off" : "visibility"}
+                      size={20}
+                      color="#6B7280"
                     />
                   </TouchableOpacity>
                 </View>
-                
+
                 {/* Password Strength Indicator */}
                 {formData.newPassword.length > 0 && (
                   <View className="mt-2">
                     <View className="flex-row items-center space-x-2 mb-1">
                       <Text className="text-xs text-gray-600">Password strength:</Text>
-                      <Text className={`text-xs font-medium ${
-                        passwordStrength.strength === 1 ? 'text-red-500' :
-                        passwordStrength.strength === 2 ? 'text-yellow-500' :
-                        passwordStrength.strength === 3 ? 'text-blue-500' :
-                        'text-green-500'
-                      }`}>
+                      <Text className={`text-xs font-medium ${passwordStrength.strength === 1 ? 'text-red-500' :
+                          passwordStrength.strength === 2 ? 'text-yellow-500' :
+                            passwordStrength.strength === 3 ? 'text-blue-500' :
+                              'text-green-500'
+                        }`}>
                         {passwordStrength.label}
                       </Text>
                     </View>
@@ -236,20 +234,19 @@ export default function ChangePasswordScreen() {
                       {[1, 2, 3, 4].map((level) => (
                         <View
                           key={level}
-                          className={`h-1 flex-1 rounded ${
-                            level <= passwordStrength.strength
+                          className={`h-1 flex-1 rounded ${level <= passwordStrength.strength
                               ? level === 1 ? 'bg-red-500' :
                                 level === 2 ? 'bg-yellow-500' :
-                                level === 3 ? 'bg-blue-500' :
-                                'bg-green-500'
+                                  level === 3 ? 'bg-blue-500' :
+                                    'bg-green-500'
                               : 'bg-gray-200'
-                          }`}
+                            }`}
                         />
                       ))}
                     </View>
                   </View>
                 )}
-                
+
                 {errors.newPassword && (
                   <Text className="text-red-500 text-sm mt-1">
                     {errors.newPassword}
@@ -271,9 +268,8 @@ export default function ChangePasswordScreen() {
                         setErrors(prev => ({ ...prev, confirmPassword: '' }));
                       }
                     }}
-                    className={`border rounded-md px-3 py-3 pr-12 bg-white ${
-                      errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`border rounded-md px-3 py-3 pr-12 bg-white ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     placeholder="Confirm your new password"
                     secureTextEntry={!showPasswords.confirm}
                     autoCapitalize="none"
@@ -282,10 +278,10 @@ export default function ChangePasswordScreen() {
                     onPress={() => togglePasswordVisibility('confirm')}
                     className="absolute right-3 top-3"
                   >
-                    <MaterialIcons 
-                      name={showPasswords.confirm ? "visibility-off" : "visibility"} 
-                      size={20} 
-                      color="#6B7280" 
+                    <MaterialIcons
+                      name={showPasswords.confirm ? "visibility-off" : "visibility"}
+                      size={20}
+                      color="#6B7280"
                     />
                   </TouchableOpacity>
                 </View>
@@ -324,9 +320,8 @@ export default function ChangePasswordScreen() {
             <TouchableOpacity
               onPress={handleChangePassword}
               disabled={isLoading}
-              className={`py-4 rounded-md ${
-                isLoading ? 'bg-gray-300' : 'bg-[#2D5A4A]'
-              }`}
+              className={`py-4 rounded-md ${isLoading ? 'bg-gray-300' : 'bg-[#2D5A4A]'
+                }`}
             >
               <Text className="text-white font-semibold text-center text-lg">
                 {isLoading ? 'Changing Password...' : 'Change Password'}
@@ -344,6 +339,6 @@ export default function ChangePasswordScreen() {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaWrapper>
   );
 }

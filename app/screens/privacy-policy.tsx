@@ -2,12 +2,13 @@ import { ScrollView, View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Card } from '../../components/ui/Card';
+import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
 
 export default function PrivacyPolicyScreen() {
   const router = useRouter();
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <SafeAreaWrapper>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="px-4 pt-6 pb-4">
           {/* Header */}
@@ -135,6 +136,6 @@ export default function PrivacyPolicyScreen() {
           </Card>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaWrapper>
   );
 }

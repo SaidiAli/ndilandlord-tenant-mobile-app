@@ -4,42 +4,43 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
+import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
 
 export default function EditProfileScreen() {
   const { user, updateUser } = useAuth();
   const router = useRouter();
-  
+
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
     email: user?.email || '',
     phone: user?.phone || '',
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.firstName.trim()) {
       newErrors.firstName = 'First name is required';
     }
-    
+
     if (!formData.lastName.trim()) {
       newErrors.lastName = 'Last name is required';
     }
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
-    
+
     if (formData.phone && !/^\+?[\d\s\-\(\)]+$/.test(formData.phone)) {
       newErrors.phone = 'Please enter a valid phone number';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -52,7 +53,7 @@ export default function EditProfileScreen() {
     setIsLoading(true);
     try {
       await updateUser(formData);
-      
+
       Alert.alert('Success', 'Profile updated successfully', [
         { text: 'OK', onPress: () => router.back() }
       ]);
@@ -68,7 +69,7 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <SafeAreaWrapper>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="px-4 pt-6 pb-4">
           {/* Header */}
@@ -80,17 +81,16 @@ export default function EditProfileScreen() {
               <MaterialIcons name="arrow-back" size={24} color="#374151" />
               <Text className="text-lg font-medium text-gray-700">Back</Text>
             </TouchableOpacity>
-            
+
             <Text className="text-xl font-semibold text-gray-800">
               Edit Profile
             </Text>
-            
+
             <TouchableOpacity
               onPress={handleSave}
               disabled={isLoading}
-              className={`px-4 py-2 rounded-md ${
-                isLoading ? 'bg-gray-300' : 'bg-[#2D5A4A]'
-              }`}
+              className={`px-4 py-2 rounded-md ${isLoading ? 'bg-gray-300' : 'bg-[#2D5A4A]'
+                }`}
             >
               <Text className="text-white font-medium">
                 {isLoading ? 'Saving...' : 'Save'}
@@ -106,7 +106,7 @@ export default function EditProfileScreen() {
                   {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
                 </Text>
               </View>
-              
+
               <TouchableOpacity className="flex-row items-center space-x-2">
                 <MaterialIcons name="camera-alt" size={16} color="#2D5A4A" />
                 <Text className="text-[#2D5A4A] font-medium">
@@ -136,9 +136,8 @@ export default function EditProfileScreen() {
                       setErrors(prev => ({ ...prev, firstName: '' }));
                     }
                   }}
-                  className={`border rounded-md px-3 py-3 bg-white ${
-                    errors.firstName ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`border rounded-md px-3 py-3 bg-white ${errors.firstName ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   placeholder="Enter your first name"
                 />
                 {errors.firstName && (
@@ -161,9 +160,8 @@ export default function EditProfileScreen() {
                       setErrors(prev => ({ ...prev, lastName: '' }));
                     }
                   }}
-                  className={`border rounded-md px-3 py-3 bg-white ${
-                    errors.lastName ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`border rounded-md px-3 py-3 bg-white ${errors.lastName ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   placeholder="Enter your last name"
                 />
                 {errors.lastName && (
@@ -186,9 +184,8 @@ export default function EditProfileScreen() {
                       setErrors(prev => ({ ...prev, email: '' }));
                     }
                   }}
-                  className={`border rounded-md px-3 py-3 bg-white ${
-                    errors.email ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`border rounded-md px-3 py-3 bg-white ${errors.email ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   placeholder="Enter your email address"
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -213,9 +210,8 @@ export default function EditProfileScreen() {
                       setErrors(prev => ({ ...prev, phone: '' }));
                     }
                   }}
-                  className={`border rounded-md px-3 py-3 bg-white ${
-                    errors.phone ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`border rounded-md px-3 py-3 bg-white ${errors.phone ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   placeholder="Enter your phone number"
                   keyboardType="phone-pad"
                 />
@@ -233,9 +229,8 @@ export default function EditProfileScreen() {
             <TouchableOpacity
               onPress={handleSave}
               disabled={isLoading}
-              className={`py-4 rounded-md ${
-                isLoading ? 'bg-gray-300' : 'bg-[#2D5A4A]'
-              }`}
+              className={`py-4 rounded-md ${isLoading ? 'bg-gray-300' : 'bg-[#2D5A4A]'
+                }`}
             >
               <Text className="text-white font-semibold text-center text-lg">
                 {isLoading ? 'Saving Changes...' : 'Save Changes'}
@@ -253,6 +248,6 @@ export default function EditProfileScreen() {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaWrapper>
   );
 }
