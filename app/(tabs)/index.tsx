@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
+import { useLease } from '../../hooks/LeaseContext';
 import { Card, MetricCard } from '../../components/ui/Card';
+import { LeaseSwitcher } from '../../components/ui/LeaseSwitcher';
 import { StatusBadge, getPaymentStatusBadge } from '../../components/ui/StatusBadge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { formatUGX } from '../../lib/currency';
@@ -13,6 +15,7 @@ import { TenantDashboardData } from '../../types';
 
 export default function DashboardScreen() {
   const { user } = useAuth();
+  const { selectedLeaseId, selectedLease } = useLease();
 
   // State for dashboard data
   const [dashboardData, setDashboardData] = useState<TenantDashboardData | null>(null);
@@ -26,7 +29,9 @@ export default function DashboardScreen() {
       setError(null);
 
       // Fetch comprehensive dashboard data from backend
-      const data = await tenantApi.getDashboard();
+      // If we have a selected lease, pass its ID
+      const data = await tenantApi.getDashboard(selectedLeaseId || undefined);
+      console.log('Dashboard data', data);
       setDashboardData(data);
     } catch (err: any) {
       console.error('Failed to fetch dashboard data:', err);
@@ -44,8 +49,9 @@ export default function DashboardScreen() {
 
   // Fetch data on component mount and focus
   useEffect(() => {
+    console.log({ selectedLease, selectedLeaseId });
     fetchDashboardData();
-  }, []);
+  }, [selectedLeaseId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -93,13 +99,16 @@ export default function DashboardScreen() {
         <View className="px-4 pt-6 pb-4">
           {/* Header */}
           <View className="space-y-4 mb-6">
-            <View>
-              <Text className="text-2xl font-semibold text-gray-800">
-                Hello, {user.firstName}!
-              </Text>
-              <Text className="text-gray-600 text-sm">
-                Welcome to your tenant portal
-              </Text>
+            <View className="flex-row justify-between items-start">
+              <View>
+                <Text className="text-2xl font-semibold text-gray-800">
+                  Hello, {user.firstName}!
+                </Text>
+                <Text className="text-gray-600 text-sm">
+                  Welcome to your tenant portal
+                </Text>
+              </View>
+              <LeaseSwitcher />
             </View>
           </View>
 

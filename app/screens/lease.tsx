@@ -7,14 +7,17 @@ import { useQuery } from '@tanstack/react-query';
 import { tenantApi } from '../../lib/api';
 import { Lease } from '../../types';
 import { useState, useEffect } from 'react';
+import { useLease } from '../../hooks/LeaseContext';
+import { LeaseSwitcher } from '../../components/ui/LeaseSwitcher';
 
 export default function LeaseScreen() {
+  const { selectedLeaseId } = useLease();
   const [currentLease, setCurrentLease] = useState<Lease | null>(null);
 
   // Fetch lease information
   const { data: leases, isLoading, error } = useQuery({
-    queryKey: ['tenant-lease'],
-    queryFn: tenantApi.getLeaseInfo,
+    queryKey: ['tenant-lease', selectedLeaseId],
+    queryFn: () => tenantApi.getLeaseInfo(selectedLeaseId || undefined),
   });
 
   useEffect(() => {
@@ -29,7 +32,7 @@ export default function LeaseScreen() {
     try {
       const phoneUrl = `tel:${phoneNumber}`;
       const canCall = await Linking.canOpenURL(phoneUrl);
-      
+
       if (canCall) {
         await Linking.openURL(phoneUrl);
       } else {
@@ -44,7 +47,7 @@ export default function LeaseScreen() {
     try {
       const emailUrl = `mailto:${email}`;
       const canEmail = await Linking.canOpenURL(emailUrl);
-      
+
       if (canEmail) {
         await Linking.openURL(emailUrl);
       } else {
@@ -123,9 +126,12 @@ export default function LeaseScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="px-4 pt-6 pb-4">
           {/* Header */}
-          <Text className="text-2xl font-semibold text-gray-800 mb-6">
-            Lease Information
-          </Text>
+          <View className="flex-row justify-between items-center mb-6">
+            <Text className="text-2xl font-semibold text-gray-800">
+              Lease Information
+            </Text>
+            <LeaseSwitcher />
+          </View>
 
           {/* Lease Status Card */}
           <Card className="mb-4">
@@ -136,12 +142,12 @@ export default function LeaseScreen() {
                 </Text>
                 {/* <StatusBadge {...getStatusBadgeProps(currentLease.status)} /> */}
               </View>
-              
+
               <View className="space-y-2">
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Lease Period:</Text>
                   <Text className="font-medium text-gray-800">
-                    {isValidStartDate && isValidEndDate 
+                    {isValidStartDate && isValidEndDate
                       ? `${new Date(currentLease.startDate).toLocaleDateString()} - ${new Date(currentLease.endDate).toLocaleDateString()}`
                       : 'Date information unavailable'
                     }
@@ -181,7 +187,7 @@ export default function LeaseScreen() {
                 <Text className="text-lg font-semibold text-gray-800">
                   Property Information
                 </Text>
-                
+
                 <View className="space-y-2">
                   <View className="flex-row justify-between">
                     <Text className="text-gray-600">Property:</Text>
@@ -213,7 +219,7 @@ export default function LeaseScreen() {
                 <Text className="text-lg font-semibold text-gray-800">
                   Unit Details
                 </Text>
-                
+
                 <View className="space-y-2">
                   <View className="flex-row justify-between">
                     <Text className="text-gray-600">Unit Number:</Text>
@@ -252,7 +258,7 @@ export default function LeaseScreen() {
               <Text className="text-lg font-semibold text-gray-800">
                 Financial Terms
               </Text>
-              
+
               <View className="space-y-2">
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Monthly Rent:</Text>
@@ -277,7 +283,7 @@ export default function LeaseScreen() {
                 <Text className="text-lg font-semibold text-gray-800">
                   Landlord Contact
                 </Text>
-                
+
                 <View className="space-y-3">
                   <View className="flex-row justify-between">
                     <Text className="text-gray-600">Name:</Text>
@@ -285,9 +291,9 @@ export default function LeaseScreen() {
                       {currentLease.landlord.firstName} {currentLease.landlord.lastName}
                     </Text>
                   </View>
-                  
+
                   {currentLease.landlord.email && (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100 -ml-2"
                       onPress={() => handleEmailLandlord(currentLease.landlord!.email!)}
                     >
@@ -302,7 +308,7 @@ export default function LeaseScreen() {
                   )}
 
                   {currentLease.landlord.phone && (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100 -ml-2"
                       onPress={() => handleCallLandlord(currentLease.landlord!.phone!)}
                     >
@@ -326,7 +332,7 @@ export default function LeaseScreen() {
               <Text className="text-lg font-semibold text-gray-800">
                 Lease Documents
               </Text>
-              
+
               <View className="bg-yellow-50 p-3 rounded-md">
                 <View className="flex-row items-center space-x-2">
                   <MaterialIcons name="info" size={20} color="#D97706" />

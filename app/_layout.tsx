@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '@/hooks/useAuth';
 import { SettingsProvider } from '@/hooks/useSettings';
+import { LeaseProvider } from '@/hooks/LeaseContext';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import '@/global.css';
@@ -45,60 +46,62 @@ export default Sentry.wrap(function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <SettingsProvider>
-            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="index" options={{ headerShown: false }} />
-                <Stack.Screen
-                  name="screens/lease"
-                  options={{
-                    headerShown: true,
-                    title: 'Lease Information',
-                    headerStyle: { backgroundColor: '#2D5A4A' },
-                    headerTintColor: 'white',
-                    headerTitleStyle: { fontWeight: 'bold' }
-                  }}
-                />
-                <Stack.Screen
-                  name="screens/property"
-                  options={{
-                    headerShown: true,
-                    title: 'Property Information',
-                    headerStyle: { backgroundColor: '#2D5A4A' },
-                    headerTintColor: 'white',
-                    headerTitleStyle: { fontWeight: 'bold' }
-                  }}
-                />
-                <Stack.Screen
-                  name="screens/help"
-                  options={{
-                    headerShown: true,
-                    title: 'Help & Resources',
-                    headerStyle: { backgroundColor: '#2D5A4A' },
-                    headerTintColor: 'white',
-                    headerTitleStyle: { fontWeight: 'bold' }
-                  }}
-                />
-                <Stack.Screen
-                  name="screens/edit-profile"
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="screens/change-password"
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="screens/terms-of-service"
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="screens/privacy-policy"
-                  options={{ headerShown: false }}
-                />
-              </Stack>
-              <StatusBar style="light" backgroundColor="#2D5A4A" />
-            </ThemeProvider>
+            <LeaseProvider>
+              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="index" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="screens/lease"
+                    options={{
+                      headerShown: true,
+                      title: 'Lease Information',
+                      headerStyle: { backgroundColor: '#2D5A4A' },
+                      headerTintColor: 'white',
+                      headerTitleStyle: { fontWeight: 'bold' }
+                    }}
+                  />
+                  <Stack.Screen
+                    name="screens/property"
+                    options={{
+                      headerShown: true,
+                      title: 'Property Information',
+                      headerStyle: { backgroundColor: '#2D5A4A' },
+                      headerTintColor: 'white',
+                      headerTitleStyle: { fontWeight: 'bold' }
+                    }}
+                  />
+                  <Stack.Screen
+                    name="screens/help"
+                    options={{
+                      headerShown: true,
+                      title: 'Help & Resources',
+                      headerStyle: { backgroundColor: '#2D5A4A' },
+                      headerTintColor: 'white',
+                      headerTitleStyle: { fontWeight: 'bold' }
+                    }}
+                  />
+                  <Stack.Screen
+                    name="screens/edit-profile"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="screens/change-password"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="screens/terms-of-service"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="screens/privacy-policy"
+                    options={{ headerShown: false }}
+                  />
+                </Stack>
+                <StatusBar style="light" backgroundColor="#2D5A4A" />
+              </ThemeProvider>
+            </LeaseProvider>
           </SettingsProvider>
         </AuthProvider>
       </QueryClientProvider>

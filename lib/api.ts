@@ -1,9 +1,9 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { secureStorage } from './storage';
-import { 
-  ApiResponse, 
-  AuthResponse, 
-  LoginRequest, 
+import {
+  ApiResponse,
+  AuthResponse,
+  LoginRequest,
   User,
   PaymentBalance,
   PaymentInitiationRequest,
@@ -20,7 +20,7 @@ import * as Sentry from '@sentry/react-native';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: 'http://192.168.1.80:4000/api',
+  baseURL: 'http://192.168.1.3:4000/api',
   // baseURL: 'https://dcgc8okokso0ko88cwwgogo0.aptusagency.com/api',
   headers: {
     'Content-Type': 'application/json',
@@ -78,19 +78,19 @@ interface ChangePasswordRequest {
 export const authApi = {
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
     try {
-      
+
       const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', credentials);
-      
+
       if (!response.data.success || !response.data.data) {
         throw new Error(response.data.error || 'Login failed');
       }
-      
+
       // Ensure user has required fields
       const authData = response.data.data;
       if (!authData.user.firstName || !authData.token) {
         throw new Error('Invalid response data from server');
       }
-      
+
       return authData;
     } catch (error: any) {
       if (error.response?.status === 401) {
@@ -100,7 +100,7 @@ export const authApi = {
       } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
         throw new Error('Unable to connect to server. Please check your connection and ensure the server is running.');
       }
-      
+
       throw new Error(error.message || 'Login failed');
     }
   },
@@ -108,11 +108,11 @@ export const authApi = {
   getCurrentUser: async (): Promise<User> => {
     try {
       const response = await api.get<ApiResponse<User>>('/auth/me');
-      
+
       if (!response.data.success || !response.data.data) {
         throw new Error(response.data.error || 'Failed to get user data');
       }
-      
+
       return response.data.data;
     } catch (error: any) {
       if (error.response?.status === 401) {
@@ -122,7 +122,7 @@ export const authApi = {
       } else if (error.response?.status === 404) {
         throw new Error('User not found');
       }
-      
+
       throw new Error(error.message || 'Failed to get user data');
     }
   },
@@ -130,11 +130,11 @@ export const authApi = {
   updateUser: async (userData: UpdateUserRequest): Promise<User> => {
     try {
       const response = await api.put<ApiResponse<User>>('/auth/profile', userData);
-      
+
       if (!response.data.success || !response.data.data) {
         throw new Error(response.data.error || 'Failed to update profile');
       }
-      
+
       return response.data.data;
     } catch (error: any) {
       if (error.response?.status === 400) {
@@ -142,7 +142,7 @@ export const authApi = {
       } else if (error.response?.status === 409) {
         throw new Error('Email already exists');
       }
-      
+
       throw new Error(error.message || 'Failed to update profile');
     }
   },
@@ -150,7 +150,7 @@ export const authApi = {
   changePassword: async (passwordData: ChangePasswordRequest): Promise<void> => {
     try {
       const response = await api.put<ApiResponse<{ message: string }>>('/auth/change-password', passwordData);
-      
+
       if (!response.data.success) {
         throw new Error(response.data.error || 'Failed to change password');
       }
@@ -160,7 +160,7 @@ export const authApi = {
       } else if (error.response?.status === 401) {
         throw new Error('Current password is incorrect');
       }
-      
+
       throw new Error(error.message || 'Failed to change password');
     }
   },
@@ -174,11 +174,11 @@ export const paymentApi = {
   getBalance: async (leaseId: string): Promise<PaymentBalance> => {
     try {
       const response = await api.get<ApiResponse<PaymentBalance>>(`/payments/lease/${leaseId}/balance`);
-      
+
       if (!response.data.success || !response.data.data) {
         throw new Error(response.data.error || 'Failed to get payment balance');
       }
-      
+
       return response.data.data;
     } catch (error: any) {
       if (error.response?.status === 404) {
@@ -196,11 +196,11 @@ export const paymentApi = {
   getHistory: async (leaseId: string): Promise<PaymentWithDetails[]> => {
     try {
       const response = await api.get<ApiResponse<PaymentWithDetails[]>>(`/payments/lease/${leaseId}/history`);
-      
+
       if (!response.data.success) {
         throw new Error(response.data.error || 'Failed to get payment history');
       }
-      
+
       // Return empty array if no data (first time users)
       return response.data.data || [];
     } catch (error: any) {
@@ -218,11 +218,11 @@ export const paymentApi = {
   initiate: async (paymentData: PaymentInitiationRequest): Promise<PaymentInitiationResponse> => {
     try {
       const response = await api.post<ApiResponse<PaymentInitiationResponse>>('/payments/initiate', paymentData);
-      
+
       if (!response.data.success || !response.data.data) {
         throw new Error(response.data.error || response.data.message || 'Failed to initiate payment');
       }
-      
+
       return response.data.data;
     } catch (error: any) {
       if (error.response?.status === 400) {
@@ -239,11 +239,11 @@ export const paymentApi = {
   getStatus: async (transactionId: string): Promise<PaymentStatusResponse> => {
     try {
       const response = await api.get<ApiResponse<PaymentStatusResponse>>(`/payments/status/${transactionId}`);
-      
+
       if (!response.data.success || !response.data.data) {
         throw new Error(response.data.error || 'Failed to get payment status');
       }
-      
+
       return response.data.data;
     } catch (error: any) {
       if (error.response?.status === 404) {
@@ -259,11 +259,11 @@ export const paymentApi = {
   getReceipt: async (paymentId: string): Promise<PaymentReceipt> => {
     try {
       const response = await api.get<ApiResponse<PaymentReceipt>>(`/payments/${paymentId}/receipt`);
-      
+
       if (!response.data.success || !response.data.data) {
         throw new Error(response.data.error || 'Failed to get receipt');
       }
-      
+
       return response.data.data;
     } catch (error: any) {
       if (error.response?.status === 400) {
@@ -286,11 +286,11 @@ export const paymentApi = {
       if (filters?.offset) params.append('offset', filters.offset.toString());
 
       const response = await api.get<ApiResponse<PaymentWithDetails[]>>(`/payments?${params.toString()}`);
-      
+
       if (!response.data.success || !response.data.data) {
         throw new Error(response.data.error || 'Failed to get payments');
       }
-      
+
       return response.data.data;
     } catch (error: any) {
       throw new Error(error.message || 'Failed to get payments');
@@ -300,14 +300,15 @@ export const paymentApi = {
 
 // Tenant-specific API functions
 export const tenantApi = {
-  getDashboard: async (): Promise<TenantDashboardData> => {
+  getDashboard: async (leaseId?: string): Promise<TenantDashboardData> => {
     try {
-      const response = await api.get<ApiResponse<TenantDashboardData>>('/tenant/dashboard');
-      
+      const url = leaseId ? `/tenant/dashboard?leaseId=${leaseId}` : '/tenant/dashboard';
+      const response = await api.get<ApiResponse<TenantDashboardData>>(url);
+
       if (!response.data.success || !response.data.data) {
         throw new Error(response.data.error || 'Failed to get dashboard data');
       }
-      
+
       return response.data.data;
     } catch (error: any) {
       if (error.response?.status === 403) {
@@ -321,8 +322,9 @@ export const tenantApi = {
     }
   },
 
-  getLeaseInfo: async () => {
-    const response = await api.get<ApiResponse<TenantDashboardData>>('/tenant/lease');
+  getLeaseInfo: async (leaseId?: string) => {
+    const url = leaseId ? `/tenant/lease?leaseId=${leaseId}` : '/tenant/lease';
+    const response = await api.get<ApiResponse<TenantDashboardData>>(url);
     if (response.data?.data) {
       // Backend returns TenantDashboardData, not LeaseApiResponse[]
       // Need to convert the structure to match what the mobile app expects
@@ -394,6 +396,11 @@ export const tenantApi = {
   getPropertyInfo: async () => {
     const response = await api.get('/tenant/property');
     return response.data;
+  },
+
+  getAllLeases: async (): Promise<LeaseApiResponse[]> => {
+    const response = await api.get<ApiResponse<LeaseApiResponse[]>>('/tenant/leases');
+    return response.data.data || [];
   },
 };
 
