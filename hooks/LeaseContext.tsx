@@ -32,9 +32,9 @@ export function LeaseProvider({ children }: { children: ReactNode }) {
             // If we have leases but none selected, select the first one (active)
             if (leases.length > 0 && !selectedLeaseId) {
                 // Try to find the first active lease, otherwise fallback to the first one
-                const activeLease = leases.find(l => l.lease.status === 'active');
+                const activeLease = leases.find(l => l.status === 'active');
                 const defaultLease = activeLease || leases[0];
-                setSelectedLeaseId(defaultLease.lease.id);
+                setSelectedLeaseId(defaultLease.id);
             }
         } catch (error) {
             console.error('Failed to fetch leases:', error);
@@ -56,7 +56,7 @@ export function LeaseProvider({ children }: { children: ReactNode }) {
         setSelectedLeaseId(leaseId);
     };
 
-    const selectedLease = allLeases.find(l => l.lease.id === selectedLeaseId) || null;
+    const selectedLease = allLeases.find(l => l.id === selectedLeaseId) || null;
 
     return (
         <LeaseContext.Provider value={{

@@ -27,10 +27,10 @@ export function LeaseSwitcher() {
             >
                 <View>
                     <Text className="text-white text-xs font-medium">
-                        {selectedLease?.property?.name || 'Unknown Property'}
+                        {selectedLease?.propertyName || 'Unknown Property'}
                     </Text>
                     <Text className="text-white/80 text-[10px]">
-                        Unit {selectedLease?.unit?.unitNumber}
+                        Unit {selectedLease?.unitNumber}
                     </Text>
                 </View>
                 <MaterialIcons name="arrow-drop-down" size={20} color="white" />
@@ -60,11 +60,11 @@ export function LeaseSwitcher() {
 
                         <FlatList
                             data={allLeases}
-                            keyExtractor={(item) => item.lease.id}
+                            keyExtractor={(item) => item.id}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
-                                    onPress={() => handleSelectLease(item.lease.id)}
-                                    className={`p-4 rounded-xl mb-3 border ${selectedLease?.lease.id === item.lease.id
+                                    onPress={() => handleSelectLease(item.id)}
+                                    className={`p-4 rounded-xl mb-3 border ${selectedLease?.id === item.id
                                         ? 'border-[#2D5A4A] bg-[#2D5A4A]/5'
                                         : 'border-gray-200'
                                         }`}
@@ -72,20 +72,20 @@ export function LeaseSwitcher() {
                                     <View className="flex-row justify-between items-start">
                                         <View>
                                             <Text className="font-semibold text-gray-800 text-lg">
-                                                {item.property?.name || 'Unknown Property'}
+                                                {item.propertyName || 'Unknown Property'}
                                             </Text>
                                             <Text className="text-gray-600 mt-1">
-                                                Unit {item.unit?.unitNumber} • {item.property?.address}
+                                                Unit {item.unitNumber}
                                             </Text>
                                             <View className="flex-row items-center mt-2 space-x-2">
                                                 <Text className="text-xs text-gray-500">
-                                                    {new Date(item.lease.startDate).toLocaleDateString()} - {new Date(item.lease.endDate).toLocaleDateString()}
+                                                    {new Date(item.startDate).toLocaleDateString()} - {item.endDate ? new Date(item.endDate).toLocaleDateString() : 'Ongoing'}
                                                 </Text>
                                             </View>
                                         </View>
                                         <View className="items-end">
-                                            <StatusBadge status={item.lease.status === 'active' ? 'success' : 'info'} text={item.lease.status} />
-                                            {selectedLease?.lease.id === item.lease.id && (
+                                            <StatusBadge status={item.status === 'active' ? 'success' : 'info'} text={item.status} />
+                                            {selectedLease?.id === item.id && (
                                                 <View className="mt-2">
                                                     <MaterialIcons name="check-circle" size={20} color="#2D5A4A" />
                                                 </View>
@@ -97,7 +97,7 @@ export function LeaseSwitcher() {
                         />
                     </TouchableOpacity>
                 </TouchableOpacity>
-            </Modal>
+            </Modal >
         </>
     );
 }

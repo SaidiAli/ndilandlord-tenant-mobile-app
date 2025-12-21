@@ -23,7 +23,6 @@ export interface Property {
   description?: string;
   landlordId: string;
   createdAt: string;
-  updatedAt: string;
   landlord?: User;
   units?: Unit[];
 }
@@ -40,7 +39,6 @@ export interface Unit {
   isAvailable: boolean;
   description?: string;
   createdAt: string;
-  updatedAt: string;
   property?: Property;
   leases?: Lease[];
 }
@@ -56,7 +54,6 @@ export interface Lease {
   status: 'draft' | 'active' | 'expired' | 'terminated';
   terms?: string;
   createdAt: string;
-  updatedAt: string;
   unit?: Unit;
   tenant?: User;
   landlord?: User;
@@ -119,123 +116,54 @@ export interface AuthResponse {
   token: string;
 }
 
-// Backend API Response Types (raw response structure from server)
 export interface LeaseApiResponse {
-  lease: {
-    id: string;
-    startDate: Date | string;
-    endDate: Date | string;
-    monthlyRent: string; // Backend stores as decimal string
-    deposit: string; // Backend stores as decimal string
-    status: 'draft' | 'active' | 'expired' | 'terminated';
-    terms?: string;
-    createdAt: Date | string;
-    updatedAt?: Date | string;
-  };
-  tenant?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone?: string;
-    userName?: string;
-    isActive?: boolean;
-  };
-  unit?: {
-    id: string;
-    unitNumber: string;
-    bedrooms: number;
-    bathrooms: number;
-    squareFeet?: number;
-    monthlyRent?: string;
-    deposit?: string;
-    isAvailable?: boolean;
-    description?: string;
-  };
-  property?: {
-    id: string;
-    name: string;
-    address: string;
-    city: string;
-    state: string;
-    postalCode?: string;
-    description?: string;
-  };
-  landlord?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    phone?: string;
-    email: string;
-  };
+  id: string;
+  startDate: string;
+  endDate: string | null;
+  monthlyRent: string;
+  propertyName: string;
+  unitNumber: string;
+  status: 'active' | 'draft' | 'expired' | 'terminated';
+  createdAt: string;
 }
 
 // Transformation utility to convert backend response to frontend Lease type
 export function transformLeaseResponse(response: LeaseApiResponse): Lease {
-  const { lease, tenant, unit, property, landlord } = response;
-  
+  // Since the API response is flat and missing many details, we populate what we can
+  // and use defaults for the rest. This transformation is likely for list views.
+
   return {
-    id: lease.id,
-    unitId: unit?.id || '',
-    tenantId: tenant?.id || '',
-    startDate: typeof lease.startDate === 'string' ? lease.startDate : lease.startDate.toISOString(),
-    endDate: typeof lease.endDate === 'string' ? lease.endDate : lease.endDate.toISOString(),
-    monthlyRent: parseFloat(lease.monthlyRent),
-    deposit: parseFloat(lease.deposit),
-    status: lease.status,
-    terms: lease.terms,
-    createdAt: typeof lease.createdAt === 'string' ? lease.createdAt : lease.createdAt.toISOString(),
-    updatedAt: lease.updatedAt ? 
-      (typeof lease.updatedAt === 'string' ? lease.updatedAt : lease.updatedAt.toISOString()) : 
-      (typeof lease.createdAt === 'string' ? lease.createdAt : lease.createdAt.toISOString()),
-    unit: unit ? {
-      id: unit.id,
-      propertyId: property?.id || '',
-      unitNumber: unit.unitNumber,
-      bedrooms: unit.bedrooms,
-      bathrooms: unit.bathrooms,
-      squareFeet: unit.squareFeet,
-      monthlyRent: unit.monthlyRent ? parseFloat(unit.monthlyRent) : 0,
-      deposit: unit.deposit ? parseFloat(unit.deposit) : 0,
-      isAvailable: unit.isAvailable || false,
-      description: unit.description,
+    id: response.id,
+    unitId: '', // Not provided in list response
+    tenantId: '', // Not provided in list response
+    startDate: response.startDate,
+    endDate: response.endDate || '',
+    monthlyRent: parseFloat(response.monthlyRent),
+    deposit: 0, // Not provided in list response
+    status: response.status,
+    terms: '', // Not provided
+    createdAt: response.createdAt,
+    unit: {
+      id: '',
+      propertyId: '',
+      unitNumber: response.unitNumber,
+      bedrooms: 0,
+      bathrooms: 0,
+      monthlyRent: parseFloat(response.monthlyRent),
+      deposit: 0,
+      isAvailable: false,
       createdAt: '',
-      updatedAt: '',
-      property: property ? {
-        id: property.id,
-        name: property.name,
-        address: property.address,
-        city: property.city,
-        state: property.state,
-        zipCode: property.postalCode || '',
-        description: property.description,
-        landlordId: landlord?.id || '',
+      property: {
+        id: '',
+        name: response.propertyName,
+        address: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        landlordId: '',
         createdAt: '',
-        updatedAt: '',
-      } : undefined,
-    } : undefined,
-    tenant: tenant ? {
-      id: tenant.id,
-      firstName: tenant.firstName,
-      lastName: tenant.lastName,
-      email: tenant.email,
-      phone: tenant.phone,
-      role: 'tenant' as const,
-      userName: tenant.userName,
-      isActive: tenant.isActive,
-      createdAt: '',
-      updatedAt: '',
-    } : undefined,
-    landlord: landlord ? {
-      id: landlord.id,
-      firstName: landlord.firstName,
-      lastName: landlord.lastName,
-      email: landlord.email,
-      phone: landlord.phone,
-      role: 'landlord' as const,
-      createdAt: '',
-      updatedAt: '',
-    } : undefined,
+      }
+    }
   };
 }
 
@@ -398,7 +326,7 @@ export interface MobileMoneyProvider {
 }
 
 // Payment Flow Types
-export type PaymentStep = 
+export type PaymentStep =
   | 'idle'
   | 'amount-selection'
   | 'payment-method'

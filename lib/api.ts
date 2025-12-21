@@ -330,46 +330,57 @@ export const tenantApi = {
       // Need to convert the structure to match what the mobile app expects
       const data = response.data.data;
       if (data.lease) {
-        // Convert TenantDashboardData.lease to LeaseApiResponse format
-        const leaseApiResponse: LeaseApiResponse = {
-          lease: {
-            id: data.lease.id,
-            startDate: data.lease.startDate,
-            endDate: data.lease.endDate,
-            monthlyRent: data.lease.monthlyRent.toString(),
-            deposit: data.lease.deposit.toString(),
-            status: data.lease.status as 'draft' | 'active' | 'expired' | 'terminated',
-            terms: data.lease.terms,
-            createdAt: new Date().toISOString(), // Backend doesn't provide this in lease info
-            updatedAt: new Date().toISOString(), // Backend doesn't provide this in lease info
-          },
-          tenant: undefined, // Not needed for tenant's own lease
+        // Construct Lease directly from TenantDashboardData
+        const lease: any = {
+          id: data.lease.id,
+          unitId: data.unit?.id || '',
+          tenantId: data.tenant.id,
+          startDate: data.lease.startDate,
+          endDate: data.lease.endDate,
+          monthlyRent: data.lease.monthlyRent,
+          deposit: data.lease.deposit,
+          status: data.lease.status as 'draft' | 'active' | 'expired' | 'terminated',
+          terms: data.lease.terms,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           unit: data.unit ? {
             id: data.unit.id,
+            propertyId: data.property?.id || '',
             unitNumber: data.unit.unitNumber,
             bedrooms: data.unit.bedrooms,
-            bathrooms: parseInt(data.unit.bathrooms), // Convert string to number
+            bathrooms: parseFloat(data.unit.bathrooms) || 0,
             squareFeet: data.unit.squareFeet,
+            monthlyRent: data.lease.monthlyRent,
+            deposit: data.lease.deposit,
+            isAvailable: false,
             description: data.unit.description,
-          } : undefined,
-          property: data.property ? {
-            id: data.property.id,
-            name: data.property.name,
-            address: data.property.address,
-            city: data.property.city,
-            state: data.property.state,
-            postalCode: data.property.postalCode,
-            description: data.property.description,
+            createdAt: '',
+            updatedAt: '',
+            property: data.property ? {
+              id: data.property.id,
+              name: data.property.name,
+              address: data.property.address,
+              city: data.property.city,
+              state: data.property.state,
+              zipCode: data.property.postalCode,
+              description: data.property.description,
+              landlordId: '',
+              createdAt: '',
+              updatedAt: ''
+            } : undefined
           } : undefined,
           landlord: data.landlord ? {
-            id: '', // Backend doesn't provide landlord ID in this format
+            id: '',
             firstName: data.landlord.name.split(' ')[0] || '',
             lastName: data.landlord.name.split(' ').slice(1).join(' ') || '',
             phone: data.landlord.phone,
             email: data.landlord.email || '',
-          } : undefined,
+            role: 'landlord',
+            createdAt: '',
+            updatedAt: ''
+          } : undefined
         };
-        return [transformLeaseResponse(leaseApiResponse)];
+        return [lease];
       }
     }
     return [];
