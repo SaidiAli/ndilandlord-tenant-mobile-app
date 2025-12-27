@@ -13,19 +13,17 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTenantLease } from '../../hooks/useTenantLease';
 import { useRetry } from '../../hooks/useRetry';
 import { paymentApi } from '../../lib/api';
-import { 
-  PaymentBalance, 
-  PaymentWithDetails, 
-  PaymentInitiationResponse, 
+import { ErrorView } from '../../components/ui/ErrorView';
+import {
+  PaymentBalance,
+  PaymentWithDetails,
+  PaymentInitiationResponse,
   PaymentStatusResponse,
   PaymentFlowState,
-  PaymentStep
 } from '../../types';
-import { 
-  formatUGX, 
-  formatPhoneNumber, 
+import {
+  formatUGX,
   normalizePhoneNumber,
-  validatePhoneNumber,
   getMobileMoneyProvider
 } from '../../lib/currency';
 
@@ -33,7 +31,7 @@ export default function PaymentsScreen() {
   const { user } = useAuth();
   const { leaseId, tenantData, isLoading: isLeaseLoading, error: leaseError } = useTenantLease();
   const { execute: executeWithRetry, isRetrying } = useRetry<any>({ maxAttempts: 3, retryDelay: 1000 });
-  
+
   // Data states
   const [balance, setBalance] = useState<PaymentBalance | null>(null);
   const [payments, setPayments] = useState<PaymentWithDetails[]>([]);
@@ -74,10 +72,10 @@ export default function PaymentsScreen() {
       setPayments(result.paymentsData);
     } catch (err: any) {
       console.error('Failed to fetch payment data:', err);
-      
+
       // Provide more user-friendly error messages
       let errorMessage = 'Failed to load payment information';
-      
+
       if (err.message.includes('Network Error') || err.message.includes('connection')) {
         errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
       } else if (err.message.includes('timeout')) {
@@ -93,7 +91,7 @@ export default function PaymentsScreen() {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
     } finally {
       if (showLoading) setIsLoading(false);
@@ -124,7 +122,7 @@ export default function PaymentsScreen() {
 
   const handlePayNow = useCallback(() => {
     if (!balance) return;
-    
+
     setPaymentFlow({
       step: 'amount-selection',
       isLoading: false,
@@ -142,18 +140,18 @@ export default function PaymentsScreen() {
 
       // Use tenant phone number from the lease data or user profile
       const phoneNumber = tenantData?.tenant?.phone || user?.phone;
-      
+
       if (!phoneNumber) {
         throw new Error('Phone number not found. Please update your profile.');
       }
-      
+
       const normalizedPhone = normalizePhoneNumber(phoneNumber);
       const provider = getMobileMoneyProvider(normalizedPhone);
-      
+
       if (provider === 'unknown') {
         throw new Error('Unsupported phone number. Please use MTN or Airtel mobile money.');
       }
-      
+
       const providerName = provider === 'mtn' ? 'MTN MoMo' : 'Airtel Money';
 
       setPaymentFlow(prev => ({
@@ -181,7 +179,7 @@ export default function PaymentsScreen() {
   const handlePinConfirm = useCallback(async (pin: string) => {
     // Get current payment flow state
     const { amount, phoneNumber } = paymentFlow;
-    
+
     if (!balance || !amount || !phoneNumber || !actualLeaseId) {
       Alert.alert('Error', 'Missing payment information. Please try again.');
       return;
@@ -214,10 +212,10 @@ export default function PaymentsScreen() {
 
     } catch (err: any) {
       console.error('Payment initiation failed:', err);
-      
+
       // Provide user-friendly error messages
       let errorMessage = 'Payment failed. Please try again.';
-      
+
       if (err.message.includes('Network Error') || err.message.includes('connection')) {
         errorMessage = 'Connection failed. Please check your internet and try again.';
       } else if (err.message.includes('timeout')) {
@@ -231,21 +229,21 @@ export default function PaymentsScreen() {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
-      setPaymentFlow(prev => ({ 
-        ...prev, 
+
+      setPaymentFlow(prev => ({
+        ...prev,
         error: errorMessage,
-        isLoading: false 
+        isLoading: false
       }));
     }
   }, [balance, paymentFlow, actualLeaseId]);
 
   const handlePaymentSuccess = useCallback((status: PaymentStatusResponse) => {
-    setPaymentFlow(prev => ({ 
-      ...prev, 
+    setPaymentFlow(prev => ({
+      ...prev,
       step: 'success',
       error: undefined,
-      isLoading: false 
+      isLoading: false
     }));
     // Refresh payment data to show updated balance
     setTimeout(() => {
@@ -254,8 +252,8 @@ export default function PaymentsScreen() {
   }, [fetchPaymentData]);
 
   const handlePaymentFailed = useCallback((status: PaymentStatusResponse) => {
-    setPaymentFlow(prev => ({ 
-      ...prev, 
+    setPaymentFlow(prev => ({
+      ...prev,
       step: 'failed',
       error: status.statusMessage || 'Payment failed',
       isLoading: false
@@ -263,8 +261,8 @@ export default function PaymentsScreen() {
   }, []);
 
   const handlePaymentTimeout = useCallback(() => {
-    setPaymentFlow(prev => ({ 
-      ...prev, 
+    setPaymentFlow(prev => ({
+      ...prev,
       step: 'failed',
       error: 'Payment processing timed out. Please check your payment status or try again.',
       isLoading: false
@@ -272,19 +270,19 @@ export default function PaymentsScreen() {
   }, []);
 
   const closePaymentFlow = useCallback(() => {
-    setPaymentFlow({ 
+    setPaymentFlow({
       step: 'idle',
       isLoading: false,
-      error: undefined 
+      error: undefined
     });
     setCurrentPayment(null);
   }, []);
 
   const retryPayment = useCallback(() => {
-    setPaymentFlow({ 
+    setPaymentFlow({
       step: 'amount-selection',
       isLoading: false,
-      error: undefined 
+      error: undefined
     });
     setCurrentPayment(null);
   }, []);
@@ -296,74 +294,44 @@ export default function PaymentsScreen() {
 
   if (leaseError) {
     return (
-      <View className="flex-1 bg-gray-50 justify-center items-center px-4">
-        <MaterialIcons name="error" size={48} color="#EF4444" />
-        <Text className="text-lg font-semibold text-gray-800 mt-4 text-center">
-          Unable to Load Lease Information
-        </Text>
-        <Text className="text-gray-600 mt-2 text-center">
-          {leaseError}
-        </Text>
-        <TouchableOpacity
-          onPress={() => fetchPaymentData()}
-          className="bg-[#2D5A4A] px-6 py-3 rounded-md mt-4"
-        >
-          <Text className="text-white font-semibold">Retry</Text>
-        </TouchableOpacity>
-      </View>
+      <ErrorView
+        title="Unable to Load Lease Information"
+        message={leaseError}
+        onRetry={() => fetchPaymentData()}
+      />
     );
   }
 
   if (!actualLeaseId) {
     return (
-      <View className="flex-1 bg-gray-50 justify-center items-center px-4">
-        <MaterialIcons name="home" size={48} color="#6B7280" />
-        <Text className="text-lg font-semibold text-gray-800 mt-4 text-center">
-          No Active Lease Found
-        </Text>
-        <Text className="text-gray-600 mt-2 text-center">
-          You don't have an active lease. Please contact your landlord.
-        </Text>
-      </View>
+      <ErrorView
+        title="No Active Lease Found"
+        message="You don't have an active lease. Please contact your landlord."
+        icon="home"
+        iconColor="#6B7280"
+      />
     );
   }
 
   if (error && !balance) {
     return (
-      <View className="flex-1 bg-gray-50 justify-center items-center px-4">
-        <MaterialIcons name="error" size={48} color="#EF4444" />
-        <Text className="text-lg font-semibold text-gray-800 mt-4 text-center">
-          Unable to Load Payments
-        </Text>
-        <Text className="text-gray-600 mt-2 text-center mb-4">
-          {error}
-        </Text>
-        {isRetrying && (
-          <Text className="text-sm text-blue-600 mb-2">
-            Retrying connection...
-          </Text>
-        )}
-        <TouchableOpacity
-          onPress={() => fetchPaymentData()}
-          disabled={isRetrying}
-          className={`px-6 py-3 rounded-md mt-2 ${
-            isRetrying ? 'bg-gray-400' : 'bg-[#2D5A4A]'
-          }`}
-        >
-          <Text className="text-white font-semibold">
-            {isRetrying ? 'Retrying...' : 'Try Again'}
-          </Text>
-        </TouchableOpacity>
+      <ErrorView
+        title="Unable to Load Payments"
+        message={error}
+        onRetry={() => fetchPaymentData()}
+        retryLabel={isRetrying ? 'Retrying...' : 'Try Again'}
+        isRetrying={isRetrying}
+      >
         <Text className="text-xs text-gray-500 mt-2 text-center">
           Check your internet connection and try again
         </Text>
-      </View>
+      </ErrorView>
     );
   }
 
   return (
     <View className="flex-1 bg-gray-50">
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
@@ -371,7 +339,7 @@ export default function PaymentsScreen() {
       >
         <View className="px-4 pt-6 pb-4">
           {/* Header */}
-          <Text className="text-2xl font-semibold text-gray-800 mb-6">
+          <Text className="text-3xl font-bold text-gray-800 mb-6">
             Payments
           </Text>
 
@@ -440,17 +408,17 @@ export default function PaymentsScreen() {
           {balance && (
             <Card className="mb-4">
               <View className="space-y-4">
-                <View className="flex-row justify-between items-center">
+                <View className="flex-row justify-between items-center mb-4">
                   <Text className="text-lg font-semibold text-gray-800">
                     Outstanding Balance
                   </Text>
-                  <MaterialIcons 
-                    name={balance.isOverdue ? "warning" : "account-balance"} 
-                    size={24} 
-                    color={balance.isOverdue ? "#F59E0B" : "#6B7280"} 
+                  <MaterialIcons
+                    name={balance.isOverdue ? "warning" : "account-balance"}
+                    size={24}
+                    color={balance.isOverdue ? "#F59E0B" : "#6B7280"}
                   />
                 </View>
-                
+
                 <View className="space-y-2">
                   <Text className="text-3xl font-bold text-[#2D5A4A]">
                     {formatUGX(balance.outstandingBalance)}
@@ -473,18 +441,15 @@ export default function PaymentsScreen() {
                   )}
                 </View>
 
-                {balance.outstandingBalance > 0 && (
-                  <TouchableOpacity 
-                    className="bg-[#2D5A4A] py-3 rounded-md items-center flex-row justify-center space-x-2 active:bg-[#254B3C]"
-                    onPress={handlePayNow}
-                    disabled={paymentFlow.step !== 'idle'}
-                  >
-                    <MaterialIcons name="payment" size={20} color="white" />
-                    <Text className="text-white font-medium text-lg">
-                      Pay Now
-                    </Text>
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity
+                  className="bg-[#2D5A4A] py-3 rounded-md items-center flex-row justify-center space-x-2 active:bg-[#254B3C] mt-8"
+                  onPress={handlePayNow}
+                  disabled={paymentFlow.step !== 'idle'}
+                >
+                  <Text className="text-white font-medium text-lg">
+                    Pay Now
+                  </Text>
+                </TouchableOpacity>
               </View>
             </Card>
           )}
@@ -492,11 +457,11 @@ export default function PaymentsScreen() {
           {/* Payment Methods Card */}
           <Card className="mb-4">
             <View className="space-y-3">
-              <Text className="text-lg font-semibold text-gray-800">
+              <Text className="text-lg font-semibold text-gray-800 mb-4">
                 Payment Methods
               </Text>
-              
-              <View className="flex-row items-center justify-between py-2 px-2 rounded-md bg-yellow-50 border border-yellow-200">
+
+              <View className="flex-row items-center justify-between py-2 px-2 mb-2 rounded-md bg-yellow-50 border border-yellow-200">
                 <View className="flex-row items-center space-x-3">
                   <MaterialIcons name="phone-android" size={24} color="#F59E0B" />
                   <View>
@@ -544,13 +509,13 @@ export default function PaymentsScreen() {
                 <View className="space-y-0">
                   {payments.map((paymentData, index) => {
                     const payment = paymentData.payment;
-                    const isLate = payment.paidDate && payment.dueDate && 
+                    const isLate = payment.paidDate && payment.dueDate &&
                       new Date(payment.paidDate) > new Date(payment.dueDate);
 
                     return (
                       <TouchableOpacity
                         key={payment.id}
-                        className="py-4 rounded-md active:bg-gray-50"
+                        className="py-4 rounded-md"
                         onPress={() => {
                           if (payment.status === 'completed') {
                             setSelectedReceiptPaymentId(payment.id);
@@ -561,29 +526,35 @@ export default function PaymentsScreen() {
                           <View className="flex-row justify-between items-start">
                             <View className="flex-1 space-y-1">
                               <Text className="font-medium text-gray-800">
-                                Rent Payment
+                                Rent Payment {payment.dueDate ? `(${new Date(payment.dueDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })})` : ''}
                               </Text>
                               <Text className="text-sm text-gray-600">
-                                {payment.dueDate && (
-                                  <>Due: {new Date(payment.dueDate).toLocaleDateString()}</>
+                                {payment.periodCovered ? (
+                                  <Text>Period: {payment.periodCovered}</Text>
+                                ) : (
+                                  payment.dueDate && (
+                                    <Text>Period: {new Date(payment.dueDate).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</Text>
+                                  )
                                 )}
+                              </Text>
+                              <Text className="text-sm text-gray-600">
                                 {payment.paidDate && (
                                   <Text>
-                                    {payment.dueDate ? ' • Paid: ' : 'Paid: '}
+                                    {'Paid: '}
                                     {new Date(payment.paidDate).toLocaleDateString()}
                                   </Text>
                                 )}
                               </Text>
-                              {payment.paymentMethod && (
+                              {/* {payment.paymentMethod && (
                                 <Text className="text-sm text-gray-500">
                                   {payment.paymentMethod === 'mobile_money' ? 'Mobile Money' : payment.paymentMethod}
                                 </Text>
-                              )}
-                              {payment.transactionId && (
+                              )} */}
+                              {/* {payment.transactionId && (
                                 <Text className="text-xs text-gray-400 font-mono">
                                   {payment.transactionId.substring(0, 8)}...
                                 </Text>
-                              )}
+                              )} */}
                               {isLate && (
                                 <Text className="text-sm text-yellow-600 font-medium">
                                   Late Payment
@@ -595,19 +566,16 @@ export default function PaymentsScreen() {
                                 </Text>
                               )}
                             </View>
-                            
+
                             <View className="items-end space-y-1">
                               <Text className="text-lg font-bold text-gray-800">
                                 {formatUGX(typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount)}
                               </Text>
                               <StatusBadge {...getPaymentStatusBadge(payment.status)} />
-                              {payment.status === 'completed' && (
-                                <MaterialIcons name="receipt" size={16} color="#2D5A4A" />
-                              )}
                             </View>
                           </View>
                         </View>
-                        
+
                         {index < payments.length - 1 && (
                           <View className="border-t border-gray-200 mt-4" />
                         )}

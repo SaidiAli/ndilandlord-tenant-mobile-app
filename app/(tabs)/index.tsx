@@ -9,6 +9,7 @@ import { Card, MetricCard } from '../../components/ui/Card';
 import { LeaseSwitcher } from '../../components/ui/LeaseSwitcher';
 import { StatusBadge, getPaymentStatusBadge } from '../../components/ui/StatusBadge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { ErrorView } from '../../components/ui/ErrorView';
 import { formatUGX } from '../../lib/currency';
 import { tenantApi } from '../../lib/api';
 import { TenantDashboardData } from '../../types';
@@ -68,21 +69,11 @@ export default function DashboardScreen() {
 
   if (error && !dashboardData) {
     return (
-      <View className="flex-1 bg-gray-50 justify-center items-center px-4">
-        <MaterialIcons name="error" size={48} color="#EF4444" />
-        <Text className="text-lg font-semibold text-gray-800 mt-4 text-center">
-          Unable to Load Dashboard
-        </Text>
-        <Text className="text-gray-600 mt-2 text-center">
-          {error}
-        </Text>
-        <TouchableOpacity
-          onPress={() => fetchDashboardData()}
-          className="bg-[#2D5A4A] px-6 py-3 rounded-md mt-4"
-        >
-          <Text className="text-white font-semibold">Retry</Text>
-        </TouchableOpacity>
-      </View>
+      <ErrorView
+        title="Unable to Load Dashboard"
+        message={error}
+        onRetry={() => fetchDashboardData()}
+      />
     );
   }
 
@@ -112,20 +103,20 @@ export default function DashboardScreen() {
 
           {/* Quick Stats */}
           <View className="space-y-4 mb-6">
-            <View className="flex-row space-x-4">
+            <View className="flex-row gap-2">
               <MetricCard
-                title="Current Rent"
+                title="Monthly Rent"
                 value={dashboardData?.lease ? formatUGX(dashboardData.lease.monthlyRent) : "Loading..."}
-                subtitle={dashboardData?.lease ? "Monthly Rent" : ""}
+                subtitle={""}
                 icon={
                   <MaterialIcons name="home" size={20} color="#6B7280" />
                 }
                 className="flex-1"
               />
               <MetricCard
-                title="Outstanding"
+                title="Outstanding balance"
                 value={dashboardData ? formatUGX(dashboardData.payments.currentBalance) : "Loading..."}
-                subtitle={dashboardData?.payments.isOverdue ? "Overdue" : "Current balance"}
+                subtitle={dashboardData?.payments.isOverdue ? "Overdue" : "On Track"}
                 icon={
                   <MaterialIcons
                     name={dashboardData?.payments.isOverdue ? "warning" : "payment"}
@@ -142,7 +133,7 @@ export default function DashboardScreen() {
           {dashboardData?.lease && (
             <Card className="mb-4">
               <View className="space-y-3">
-                <View className="flex-row justify-between items-center">
+                <View className="flex-row justify-between items-center mb-4">
                   <Text className="text-lg font-semibold text-gray-800">
                     Payment Summary
                   </Text>
@@ -226,11 +217,11 @@ export default function DashboardScreen() {
           {/* Recent Payments */}
           <Card className="mb-4">
             <View className="space-y-3">
-              <View className="flex-row justify-between items-center">
+              <View className="flex-row justify-between items-center mb-4">
                 <Text className="text-lg font-semibold text-gray-800">
                   Recent Payments
                 </Text>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/payments')}>
                   <Text className="text-[#2D5A4A] text-sm">
                     View All
                   </Text>

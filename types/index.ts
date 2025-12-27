@@ -70,6 +70,7 @@ export interface Payment {
   paymentMethod?: string;
   transactionId?: string;
   notes?: string;
+  periodCovered?: string;
   createdAt: string;
   updatedAt: string;
   lease?: Lease;
@@ -292,9 +293,10 @@ export interface PaymentReceipt {
     id: string;
     monthlyRent: number;
     startDate: string;
-    endDate: string;
+    endDate?: string | null;
   } | null;
   generatedAt: string;
+  dueDate?: string;
   companyInfo: {
     name: string;
     address: string;

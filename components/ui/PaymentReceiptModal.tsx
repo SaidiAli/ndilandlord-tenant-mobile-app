@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  Modal, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
   ScrollView,
   Share,
   Alert
@@ -148,7 +148,7 @@ Thank you for your payment!
                       PAYMENT RECEIPT
                     </Text>
                     <Text className="text-lg font-semibold text-[#2D5A4A] mt-1">
-                      #{receipt.receiptNumber}
+                      ID: {receipt.transactionId}
                     </Text>
                   </View>
 
@@ -168,17 +168,19 @@ Thank you for your payment!
                       </Text>
                     </View>
 
+                    {receipt.dueDate && (
+                      <View className="flex-row justify-between">
+                        <Text className="text-gray-600">Payment Period:</Text>
+                        <Text className="font-medium text-gray-800">
+                          {new Date(receipt.dueDate).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                        </Text>
+                      </View>
+                    )}
+
                     <View className="flex-row justify-between">
                       <Text className="text-gray-600">Payment Date:</Text>
                       <Text className="font-medium text-gray-800">
                         {new Date(receipt.paidDate).toLocaleDateString()}
-                      </Text>
-                    </View>
-
-                    <View className="flex-row justify-between">
-                      <Text className="text-gray-600">Transaction ID:</Text>
-                      <Text className="font-mono text-sm text-gray-800">
-                        {receipt.transactionId}
                       </Text>
                     </View>
                   </View>
@@ -224,7 +226,7 @@ Thank you for your payment!
                         <View className="flex-row justify-between">
                           <Text className="text-gray-600">Lease Period:</Text>
                           <Text className="text-gray-800">
-                            {new Date(receipt.lease.startDate).toLocaleDateString()} - {new Date(receipt.lease.endDate).toLocaleDateString()}
+                            {new Date(receipt.lease.startDate).toLocaleDateString()} - {receipt.lease.endDate ? new Date(receipt.lease.endDate).toLocaleDateString() : 'Ongoing'}
                           </Text>
                         </View>
                       </View>
@@ -249,15 +251,15 @@ Thank you for your payment!
         {/* Actions */}
         {receipt && (
           <View className="bg-white px-4 pb-6 pt-4 border-t border-gray-200">
-            <View className="flex-row space-x-3">
+            <View className="flex-row gap-2">
               <TouchableOpacity
                 onPress={handleShare}
-                className="flex-1 bg-[#2D5A4A] py-3 rounded-md items-center flex-row justify-center space-x-2"
+                className="flex-1 bg-[#2D5A4A] py-3 rounded-md items-center flex-row justify-center"
               >
                 <MaterialIcons name="share" size={20} color="white" />
                 <Text className="text-white font-semibold">Share Receipt</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 onPress={onClose}
                 className="px-6 py-3 border border-gray-300 rounded-md items-center"

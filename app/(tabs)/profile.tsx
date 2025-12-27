@@ -27,7 +27,7 @@ export default function ProfileScreen() {
     const supportEmail = 'support@ndilandlord.com';
     const subject = 'Support Request - NDI Landlord App';
     const mailtoUrl = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}`;
-    
+
     try {
       const canOpen = await Linking.canOpenURL(mailtoUrl);
       if (canOpen) {
@@ -93,7 +93,7 @@ export default function ProfileScreen() {
                   {user.firstName.charAt(0)}{user.lastName.charAt(0)}
                 </Text>
               </View>
-              
+
               <View className="space-y-1 items-center">
                 <Text className="text-lg font-semibold text-gray-800">
                   {user.firstName} {user.lastName}
@@ -107,7 +107,7 @@ export default function ProfileScreen() {
               </View>
 
               <TouchableOpacity
-                className="flex-row items-center space-x-2 bg-[#2D5A4A] px-4 py-2 rounded-md active:bg-[#254B3C]"
+                className="flex-row items-center space-x-2 bg-[#2D5A4A] px-4 py-2 rounded-md"
                 onPress={handleEditProfile}
               >
                 <MaterialIcons name="edit" size={16} color="white" />
@@ -126,7 +126,7 @@ export default function ProfileScreen() {
               </Text>
 
               <TouchableOpacity
-                className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100"
+                className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleNavigateToLease}
               >
                 <View className="flex-row items-center space-x-3">
@@ -139,7 +139,7 @@ export default function ProfileScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100"
+                className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleNavigateToProperty}
               >
                 <View className="flex-row items-center space-x-3">
@@ -152,7 +152,7 @@ export default function ProfileScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100"
+                className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleNavigateToHelp}
               >
                 <View className="flex-row items-center space-x-3">
@@ -174,7 +174,7 @@ export default function ProfileScreen() {
               </Text>
 
               <TouchableOpacity
-                className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100"
+                className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleEditProfile}
               >
                 <View className="flex-row items-center space-x-3">
@@ -187,7 +187,7 @@ export default function ProfileScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100"
+                className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleChangePassword}
               >
                 <View className="flex-row items-center space-x-3">
@@ -260,7 +260,7 @@ export default function ProfileScreen() {
               </Text>
 
               <TouchableOpacity
-                className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100"
+                className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleContactSupport}
               >
                 <View className="flex-row items-center space-x-3">
@@ -272,8 +272,8 @@ export default function ProfileScreen() {
                 <MaterialIcons name="chevron-right" size={20} color="#6B7280" />
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100"
+              <TouchableOpacity
+                className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleTermsOfService}
               >
                 <View className="flex-row items-center space-x-3">
@@ -285,8 +285,8 @@ export default function ProfileScreen() {
                 <MaterialIcons name="chevron-right" size={20} color="#6B7280" />
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100"
+              <TouchableOpacity
+                className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handlePrivacyPolicy}
               >
                 <View className="flex-row items-center space-x-3">
@@ -315,7 +315,7 @@ export default function ProfileScreen() {
           {/* Logout */}
           <Card className="mb-6">
             <TouchableOpacity
-              className="flex-row justify-center items-center py-3 rounded-md active:bg-red-50"
+              className="flex-row justify-center items-center py-3 rounded-md"
               onPress={handleLogout}
             >
               <View className="flex-row items-center space-x-2">
