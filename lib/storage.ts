@@ -3,6 +3,7 @@ import { User } from '../types';
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
+const LEASE_KEY = 'selected_lease_id';
 
 export const secureStorage = {
   async setToken(token: string): Promise<void> {
@@ -25,5 +26,14 @@ export const secureStorage = {
   async clear(): Promise<void> {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     await SecureStore.deleteItemAsync(USER_KEY);
+    await SecureStore.deleteItemAsync(LEASE_KEY);
+  },
+
+  async setLeaseId(leaseId: string): Promise<void> {
+    await SecureStore.setItemAsync(LEASE_KEY, leaseId);
+  },
+
+  async getLeaseId(): Promise<string | null> {
+    return await SecureStore.getItemAsync(LEASE_KEY);
   },
 };

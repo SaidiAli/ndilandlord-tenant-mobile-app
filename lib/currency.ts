@@ -7,7 +7,7 @@
  */
 export function formatUGX(amount: number): string {
   if (isNaN(amount)) return 'UGX 0';
-  
+
   return new Intl.NumberFormat('en-UG', {
     style: 'currency',
     currency: 'UGX',
@@ -21,7 +21,7 @@ export function formatUGX(amount: number): string {
  */
 export function formatCompactUGX(amount: number): string {
   if (isNaN(amount)) return 'UGX 0';
-  
+
   const formatter = new Intl.NumberFormat('en-UG', {
     style: 'currency',
     currency: 'UGX',
@@ -30,7 +30,7 @@ export function formatCompactUGX(amount: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 1,
   });
-  
+
   return formatter.format(amount).replace('USh', 'UGX');
 }
 
@@ -39,7 +39,7 @@ export function formatCompactUGX(amount: number): string {
  */
 export function formatNumber(amount: number): string {
   if (isNaN(amount)) return '0';
-  
+
   return new Intl.NumberFormat('en-UG', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
@@ -55,7 +55,7 @@ export function parseUGX(ugxString: string): number {
     .replace(/UGX|USh/gi, '')
     .replace(/[,\s]/g, '')
     .trim();
-  
+
   const parsed = parseFloat(cleanString);
   return isNaN(parsed) ? 0 : parsed;
 }
@@ -71,21 +71,21 @@ export function validateUGXAmount(
   if (isNaN(amount) || amount <= 0) {
     return { isValid: false, error: 'Please enter a valid amount' };
   }
-  
+
   if (amount < minAmount) {
-    return { 
-      isValid: false, 
-      error: `Minimum payment amount is ${formatUGX(minAmount)}` 
+    return {
+      isValid: false,
+      error: `Minimum payment amount is ${formatUGX(minAmount)}`
     };
   }
-  
+
   if (maxAmount && amount > maxAmount) {
-    return { 
-      isValid: false, 
-      error: `Maximum payment amount is ${formatUGX(maxAmount)}` 
+    return {
+      isValid: false,
+      error: `Maximum payment amount is ${formatUGX(maxAmount)}`
     };
   }
-  
+
   return { isValid: true };
 }
 
@@ -94,27 +94,29 @@ export function validateUGXAmount(
  */
 export function generatePaymentSuggestions(
   outstandingBalance: number,
-  minimumPayment: number = 10000
+  monthlyRent: number
 ): number[] {
   const suggestions: number[] = [];
-  
-  // Add minimum payment if different from other suggestions
-  if (minimumPayment < outstandingBalance) {
-    suggestions.push(minimumPayment);
+
+  // If monthly rent is invalid or zero, just return outstanding balance
+  if (!monthlyRent || monthlyRent <= 0) {
+    return [outstandingBalance];
   }
-  
-  // Add percentage-based suggestions
-  const percentages = [25, 50, 75];
-  percentages.forEach(percent => {
-    const amount = Math.floor((outstandingBalance * percent) / 100);
-    if (amount >= minimumPayment && amount < outstandingBalance) {
+
+  // Add multiples of monthly rent (1x, 2x, 3x) that are less than outstanding balance
+  // We limit to 3 multiples to keep the list concise
+  for (let multiplier = 1; multiplier <= 3; multiplier++) {
+    const amount = monthlyRent * multiplier;
+    if (amount < outstandingBalance) {
       suggestions.push(amount);
+    } else {
+      break;
     }
-  });
-  
-  // Add full amount
+  }
+
+  // Always include the full outstanding balance
   suggestions.push(outstandingBalance);
-  
+
   // Remove duplicates and sort
   return [...new Set(suggestions)].sort((a, b) => a - b);
 }
@@ -125,7 +127,7 @@ export function generatePaymentSuggestions(
 export function formatPhoneNumber(phoneNumber: string): string {
   // Remove any non-digit characters
   const digits = phoneNumber.replace(/\D/g, '');
-  
+
   // Handle Ugandan phone numbers
   if (digits.length === 10 && digits.startsWith('0')) {
     // Format as: 0XXX XXX XXX
@@ -134,7 +136,7 @@ export function formatPhoneNumber(phoneNumber: string): string {
     // Format as: +256 XXX XXX XXX
     return `+${digits.substring(0, 3)} ${digits.substring(3, 6)} ${digits.substring(6, 9)} ${digits.substring(9)}`;
   }
-  
+
   // Return original if format not recognized
   return phoneNumber;
 }
@@ -144,19 +146,19 @@ export function formatPhoneNumber(phoneNumber: string): string {
  */
 export function validatePhoneNumber(phoneNumber: string): { isValid: boolean; error?: string } {
   const digits = phoneNumber.replace(/\D/g, '');
-  
+
   // Check for valid Ugandan formats
-  const isValid = 
+  const isValid =
     (digits.length === 10 && digits.startsWith('0')) ||
     (digits.length === 12 && digits.startsWith('256'));
-  
+
   if (!isValid) {
     return {
       isValid: false,
       error: 'Please enter a valid Ugandan phone number (0XXX XXX XXX or +256 XXX XXX XXX)'
     };
   }
-  
+
   return { isValid: true };
 }
 
@@ -165,7 +167,7 @@ export function validatePhoneNumber(phoneNumber: string): { isValid: boolean; er
  */
 export function normalizePhoneNumber(phoneNumber: string): string {
   const digits = phoneNumber.replace(/\D/g, '');
-  
+
   if (digits.length === 10 && digits.startsWith('0')) {
     // Convert 0XXX XXX XXX to 256XXX XXX XXX
     return '256' + digits.substring(1);
@@ -173,7 +175,7 @@ export function normalizePhoneNumber(phoneNumber: string): string {
     // Already in correct format
     return digits;
   }
-  
+
   // Return as-is if format not recognized
   return phoneNumber.replace(/\D/g, '');
 }
@@ -184,24 +186,24 @@ export function normalizePhoneNumber(phoneNumber: string): string {
 export function getMobileMoneyProvider(phoneNumber: string): 'mtn' | 'airtel' | 'unknown' {
   const digits = phoneNumber.replace(/\D/g, '');
   const normalizedNumber = normalizePhoneNumber(digits);
-  
+
   // MTN prefixes in Uganda
   const mtnPrefixes = ['25677', '25678', '25676', '25639'];
-  
+
   // Airtel prefixes in Uganda
   const airtelPrefixes = ['25675', '25670', '25674', '25620'];
-  
+
   for (const prefix of mtnPrefixes) {
     if (normalizedNumber.startsWith(prefix)) {
       return 'mtn';
     }
   }
-  
+
   for (const prefix of airtelPrefixes) {
     if (normalizedNumber.startsWith(prefix)) {
       return 'airtel';
     }
   }
-  
+
   return 'unknown';
 }

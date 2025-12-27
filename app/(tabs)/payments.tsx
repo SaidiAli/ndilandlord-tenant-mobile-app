@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Card } from '../../components/ui/Card';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { StatusBadge, getPaymentStatusBadge } from '../../components/ui/StatusBadge';
-import { PaymentAmountModal } from '../../components/ui/PaymentAmountModal';
+import { PaymentModal } from '../../components/ui/PaymentModal';
 import { MobileMoneyPinModal } from '../../components/ui/MobileMoneyPinModal';
 import { PaymentStatusTracker } from '../../components/ui/PaymentStatusTracker';
 import { PaymentReceiptModal } from '../../components/ui/PaymentReceiptModal';
@@ -591,7 +591,7 @@ export default function PaymentsScreen() {
 
       {/* Payment Amount Modal */}
       {balance && (
-        <PaymentAmountModal
+        <PaymentModal
           visible={paymentFlow.step === 'amount-selection'}
           onClose={closePaymentFlow}
           onConfirm={handleAmountConfirm}

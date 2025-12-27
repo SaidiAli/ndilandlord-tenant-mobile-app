@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  Modal, 
-  TouchableOpacity, 
-  TextInput, 
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  TextInput,
   Pressable,
   KeyboardAvoidingView,
   Platform,
@@ -14,12 +14,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Card } from './Card';
 import { LoadingSpinner } from './LoadingSpinner';
 import { PaymentBalance } from '../../types';
-import { 
-  formatUGX, 
-  parseUGX, 
-  validateUGXAmount, 
+import {
+  formatUGX,
+  parseUGX,
+  validateUGXAmount,
   generatePaymentSuggestions,
-  formatNumber 
+  formatNumber
 } from '../../lib/currency';
 
 interface PaymentAmountModalProps {
@@ -30,7 +30,7 @@ interface PaymentAmountModalProps {
   isLoading?: boolean;
 }
 
-export function PaymentAmountModal({
+export function PaymentModal({
   visible,
   onClose,
   onConfirm,
@@ -41,7 +41,7 @@ export function PaymentAmountModal({
   const [selectedSuggestion, setSelectedSuggestion] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const suggestions = generatePaymentSuggestions(balance.outstandingBalance, balance.minimumPayment);
+  const suggestions = generatePaymentSuggestions(balance.outstandingBalance, balance.monthlyRent);
 
   useEffect(() => {
     if (visible) {
@@ -55,10 +55,10 @@ export function PaymentAmountModal({
   const handleAmountChange = (text: string) => {
     // Remove any non-digit characters except for spaces and commas
     const cleanText = text.replace(/[^\d,\s]/g, '');
-    
+
     // Parse the amount
     const numericValue = parseUGX(cleanText);
-    
+
     // Update state
     setAmount(formatNumber(numericValue));
     setSelectedSuggestion(null);
@@ -73,7 +73,7 @@ export function PaymentAmountModal({
 
   const handleConfirm = () => {
     const numericAmount = parseUGX(amount);
-    
+
     // Validate amount
     const validation = validateUGXAmount(
       numericAmount,
@@ -99,7 +99,7 @@ export function PaymentAmountModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
@@ -110,8 +110,8 @@ export function PaymentAmountModal({
               <TouchableOpacity onPress={onClose}>
                 <MaterialIcons name="close" size={24} color="#6B7280" />
               </TouchableOpacity>
-              <Text className="text-lg font-semibold text-gray-800">
-                Payment Amount
+              <Text className="text-2xl font-semibold text-gray-800">
+                Make Payment
               </Text>
               <View className="w-6" />
             </View>
@@ -140,7 +140,7 @@ export function PaymentAmountModal({
                 <Text className="text-lg font-semibold text-gray-800">
                   Enter Payment Amount
                 </Text>
-                
+
                 <View className="relative">
                   <Text className="absolute left-3 top-3 text-lg text-gray-500 z-10">
                     UGX
@@ -179,43 +179,39 @@ export function PaymentAmountModal({
                 <Text className="text-lg font-semibold text-gray-800">
                   Quick Amounts
                 </Text>
-                
+
                 <View className="flex-row flex-wrap gap-2">
                   {suggestions.map((suggestion) => {
                     const isSelected = selectedSuggestion === suggestion;
                     const percentage = Math.round((suggestion / balance.outstandingBalance) * 100);
-                    
+
                     return (
                       <TouchableOpacity
                         key={suggestion}
                         onPress={() => handleSuggestionPress(suggestion)}
-                        className={`px-4 py-2 rounded-md border ${
-                          isSelected
+                        className={`px-4 py-2 rounded-md border ${isSelected
                             ? 'bg-[#2D5A4A] border-[#2D5A4A]'
                             : 'bg-white border-gray-300'
-                        }`}
+                          }`}
                       >
                         <Text
-                          className={`text-sm font-medium ${
-                            isSelected ? 'text-white' : 'text-gray-700'
-                          }`}
+                          className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-gray-700'
+                            }`}
                         >
                           {formatUGX(suggestion)}
                         </Text>
                         {suggestion < balance.outstandingBalance && (
                           <Text
-                            className={`text-xs ${
-                              isSelected ? 'text-gray-200' : 'text-gray-500'
-                            }`}
+                            className={`text-xs ${isSelected ? 'text-gray-200' : 'text-gray-500'
+                              }`}
                           >
                             {percentage}%
                           </Text>
                         )}
                         {suggestion === balance.outstandingBalance && (
                           <Text
-                            className={`text-xs ${
-                              isSelected ? 'text-gray-200' : 'text-gray-500'
-                            }`}
+                            className={`text-xs ${isSelected ? 'text-gray-200' : 'text-gray-500'
+                              }`}
                           >
                             Full
                           </Text>
@@ -223,12 +219,6 @@ export function PaymentAmountModal({
                       </TouchableOpacity>
                     );
                   })}
-                </View>
-
-                <View className="bg-yellow-50 p-3 rounded-md">
-                  <Text className="text-yellow-800 text-sm">
-                    💡 Minimum payment: {formatUGX(balance.minimumPayment)}
-                  </Text>
                 </View>
               </View>
             </Card>
@@ -239,11 +229,10 @@ export function PaymentAmountModal({
             <TouchableOpacity
               onPress={handleConfirm}
               disabled={!amount || isLoading || !!error}
-              className={`py-3 rounded-md items-center ${
-                (!amount || isLoading || !!error)
+              className={`py-3 rounded-md items-center ${(!amount || isLoading || !!error)
                   ? 'bg-gray-300'
                   : 'bg-[#2D5A4A]'
-              }`}
+                }`}
             >
               {isLoading ? (
                 <LoadingSpinner size="small" message="" className="my-0" />
