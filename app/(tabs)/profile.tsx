@@ -99,19 +99,16 @@ export default function ProfileScreen() {
                   {user.firstName} {user.lastName}
                 </Text>
                 <Text className="text-gray-600 text-sm">
-                  {user.email}
-                </Text>
-                <Text className="text-[#2D5A4A] text-sm font-medium capitalize">
-                  {user.role}
+                  {user.email ? user.email : 'No email'}
                 </Text>
               </View>
 
               <TouchableOpacity
-                className="flex-row items-center space-x-2 bg-[#2D5A4A] px-4 py-2 rounded-md"
+                className="flex-row items-center gap-2 px-4 py-2 rounded-md"
                 onPress={handleEditProfile}
               >
-                <MaterialIcons name="edit" size={16} color="white" />
-                <Text className="text-white font-medium text-sm">
+                <MaterialIcons name="edit" size={16} color="#2D5A4A" />
+                <Text className="text-[#2D5A4A] font-medium text-sm">
                   Edit Profile
                 </Text>
               </TouchableOpacity>
@@ -129,7 +126,7 @@ export default function ProfileScreen() {
                 className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleNavigateToLease}
               >
-                <View className="flex-row items-center space-x-3">
+                <View className="flex-row items-center gap-2">
                   <MaterialIcons name="description" size={20} color="#6B7280" />
                   <Text className="font-medium text-gray-800">
                     Lease Information
@@ -142,7 +139,7 @@ export default function ProfileScreen() {
                 className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleNavigateToProperty}
               >
-                <View className="flex-row items-center space-x-3">
+                <View className="flex-row items-center gap-2">
                   <MaterialIcons name="home" size={20} color="#6B7280" />
                   <Text className="font-medium text-gray-800">
                     Property Information
@@ -155,7 +152,7 @@ export default function ProfileScreen() {
                 className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleNavigateToHelp}
               >
-                <View className="flex-row items-center space-x-3">
+                <View className="flex-row items-center gap-2">
                   <MaterialIcons name="help-outline" size={20} color="#6B7280" />
                   <Text className="font-medium text-gray-800">
                     Help & Resources
@@ -177,7 +174,7 @@ export default function ProfileScreen() {
                 className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleEditProfile}
               >
-                <View className="flex-row items-center space-x-3">
+                <View className="flex-row items-center gap-2">
                   <MaterialIcons name="person" size={20} color="#6B7280" />
                   <Text className="font-medium text-gray-800">
                     Personal Information
@@ -190,7 +187,7 @@ export default function ProfileScreen() {
                 className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleChangePassword}
               >
-                <View className="flex-row items-center space-x-3">
+                <View className="flex-row items-center gap-2">
                   <MaterialIcons name="lock" size={20} color="#6B7280" />
                   <Text className="font-medium text-gray-800">
                     Change Password
@@ -209,19 +206,20 @@ export default function ProfileScreen() {
               </Text>
 
               <View className="flex-row justify-between items-center py-2">
-                <View className="flex-row items-center space-x-3">
+                <View className="flex-row items-center gap-2">
                   <MaterialIcons name="notifications" size={20} color="#6B7280" />
                   <View>
                     <Text className="font-medium text-gray-800">
                       Push Notifications
                     </Text>
-                    <Text className="text-sm text-gray-600">
-                      Receive payment reminders and updates
-                    </Text>
+                    {/* <Text className="text-sm text-gray-600">
+                      Receive payment reminders and updates */}
+                    {/* </Text> */}
                   </View>
                 </View>
                 <Switch
                   value={settings.pushNotifications}
+                  disabled
                   onValueChange={(value) => updateSetting('pushNotifications', value)}
                   trackColor={{ false: '#E5E7EB', true: '#2D5A4A' }}
                   thumbColor={settings.pushNotifications ? '#ffffff' : '#9CA3AF'}
@@ -231,19 +229,17 @@ export default function ProfileScreen() {
               <View className="border-t border-gray-200" />
 
               <View className="flex-row justify-between items-center py-2">
-                <View className="flex-row items-center space-x-3">
+                <View className="flex-row items-center gap-2">
                   <MaterialIcons name="credit-card" size={20} color="#6B7280" />
                   <View>
                     <Text className="font-medium text-gray-800">
                       Auto-Payment
                     </Text>
-                    <Text className="text-sm text-gray-600">
-                      Automatically pay rent each month
-                    </Text>
                   </View>
                 </View>
                 <Switch
                   value={settings.autoPayment}
+                  disabled
                   onValueChange={(value) => updateSetting('autoPayment', value)}
                   trackColor={{ false: '#E5E7EB', true: '#2D5A4A' }}
                   thumbColor={settings.autoPayment ? '#ffffff' : '#9CA3AF'}
@@ -263,7 +259,7 @@ export default function ProfileScreen() {
                 className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleContactSupport}
               >
-                <View className="flex-row items-center space-x-3">
+                <View className="flex-row items-center gap-2">
                   <MaterialIcons name="help" size={20} color="#6B7280" />
                   <Text className="font-medium text-gray-800">
                     Contact Support
@@ -276,7 +272,7 @@ export default function ProfileScreen() {
                 className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handleTermsOfService}
               >
-                <View className="flex-row items-center space-x-3">
+                <View className="flex-row items-center gap-2">
                   <MaterialIcons name="description" size={20} color="#6B7280" />
                   <Text className="font-medium text-gray-800">
                     Terms of Service
@@ -289,7 +285,7 @@ export default function ProfileScreen() {
                 className="flex-row justify-between items-center py-2 px-2 rounded-md"
                 onPress={handlePrivacyPolicy}
               >
-                <View className="flex-row items-center space-x-3">
+                <View className="flex-row items-center gap-2">
                   <MaterialIcons name="privacy-tip" size={20} color="#6B7280" />
                   <Text className="font-medium text-gray-800">
                     Privacy Policy

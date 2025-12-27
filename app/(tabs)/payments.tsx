@@ -526,14 +526,14 @@ export default function PaymentsScreen() {
                           <View className="flex-row justify-between items-start">
                             <View className="flex-1 space-y-1">
                               <Text className="font-medium text-gray-800">
-                                Rent Payment {payment.dueDate ? `(${new Date(payment.dueDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })})` : ''}
+                                Rent Payment {payment.dueDate ? `(${new Date(payment.dueDate).toLocaleDateString()})` : ''}
                               </Text>
                               <Text className="text-sm text-gray-600">
                                 {payment.periodCovered ? (
                                   <Text>Period: {payment.periodCovered}</Text>
                                 ) : (
                                   payment.dueDate && (
-                                    <Text>Period: {new Date(payment.dueDate).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</Text>
+                                    <Text>Period: {new Date(payment.dueDate).toLocaleDateString()}</Text>
                                   )
                                 )}
                               </Text>

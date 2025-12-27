@@ -77,8 +77,7 @@ export function PaymentModal({
     // Validate amount
     const validation = validateUGXAmount(
       numericAmount,
-      balance.minimumPayment,
-      balance.outstandingBalance
+      10000
     );
 
     if (!validation.isValid) {
@@ -190,8 +189,8 @@ export function PaymentModal({
                         key={suggestion}
                         onPress={() => handleSuggestionPress(suggestion)}
                         className={`px-4 py-2 rounded-md border ${isSelected
-                            ? 'bg-[#2D5A4A] border-[#2D5A4A]'
-                            : 'bg-white border-gray-300'
+                          ? 'bg-[#2D5A4A] border-[#2D5A4A]'
+                          : 'bg-white border-gray-300'
                           }`}
                       >
                         <Text
@@ -230,8 +229,8 @@ export function PaymentModal({
               onPress={handleConfirm}
               disabled={!amount || isLoading || !!error}
               className={`py-3 rounded-md items-center ${(!amount || isLoading || !!error)
-                  ? 'bg-gray-300'
-                  : 'bg-[#2D5A4A]'
+                ? 'bg-gray-300'
+                : 'bg-[#2D5A4A]'
                 }`}
             >
               {isLoading ? (

@@ -172,7 +172,7 @@ Thank you for your payment!
                       <View className="flex-row justify-between">
                         <Text className="text-gray-600">Payment Period:</Text>
                         <Text className="font-medium text-gray-800">
-                          {new Date(receipt.dueDate).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                          {new Date(receipt.dueDate).toLocaleDateString()}
                         </Text>
                       </View>
                     )}
