@@ -13,7 +13,8 @@ import {
   PaymentWithDetails,
   LeaseApiResponse,
   transformLeaseResponse,
-  TenantDashboardData
+  TenantDashboardData,
+  TenantPropertyInfo
 } from '../types';
 
 import * as Sentry from '@sentry/react-native';
@@ -404,9 +405,22 @@ export const tenantApi = {
     return response.data;
   },
 
-  getPropertyInfo: async () => {
-    const response = await api.get('/tenant/property');
-    return response.data;
+  getPropertyInfo: async (leaseId?: string): Promise<TenantPropertyInfo> => {
+    try {
+      const url = leaseId ? `/tenant/property?leaseId=${leaseId}` : '/tenant/property';
+      const response = await api.get<ApiResponse<TenantPropertyInfo>>(url);
+
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || 'Failed to get property information');
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        throw new Error('Property information not found');
+      }
+      throw new Error(error.message || 'Failed to get property information');
+    }
   },
 
   getAllLeases: async (): Promise<LeaseApiResponse[]> => {

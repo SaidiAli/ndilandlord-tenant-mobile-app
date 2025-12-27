@@ -31,7 +31,6 @@ export default function DashboardScreen() {
       // Fetch comprehensive dashboard data from backend
       // If we have a selected lease, pass its ID
       const data = await tenantApi.getDashboard(selectedLeaseId || undefined);
-      console.log('Dashboard data', data);
       setDashboardData(data);
     } catch (err: any) {
       console.error('Failed to fetch dashboard data:', err);
@@ -49,7 +48,6 @@ export default function DashboardScreen() {
 
   // Fetch data on component mount and focus
   useEffect(() => {
-    console.log({ selectedLease, selectedLeaseId });
     fetchDashboardData();
   }, [selectedLeaseId]);
 

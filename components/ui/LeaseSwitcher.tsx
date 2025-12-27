@@ -22,18 +22,18 @@ export function LeaseSwitcher() {
         <>
             <TouchableOpacity
                 onPress={() => setModalVisible(true)}
-                className="flex-row items-center bg-white/20 px-3 py-1.5 rounded-full space-x-2"
+                className="flex-row items-center bg-white px-3 py-1.5 rounded-full space-x-2 border border-gray-200 shadow-sm"
                 style={{ alignSelf: 'flex-start' }}
             >
                 <View>
-                    <Text className="text-white text-xs font-medium">
+                    <Text className="text-gray-800 text-xs font-medium">
                         {selectedLease?.propertyName || 'Unknown Property'}
                     </Text>
-                    <Text className="text-white/80 text-[10px]">
+                    <Text className="text-gray-500 text-[10px]">
                         Unit {selectedLease?.unitNumber}
                     </Text>
                 </View>
-                <MaterialIcons name="arrow-drop-down" size={20} color="white" />
+                <MaterialIcons name="arrow-drop-down" size={20} color="#4B5563" />
             </TouchableOpacity>
 
             <Modal

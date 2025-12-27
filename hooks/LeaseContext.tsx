@@ -26,7 +26,6 @@ export function LeaseProvider({ children }: { children: ReactNode }) {
         try {
             setIsLoadingLeases(true);
             const leases = await tenantApi.getAllLeases();
-            console.log('Leases:', leases);
             setAllLeases(leases);
 
             // If we have leases but none selected, select the first one (active)

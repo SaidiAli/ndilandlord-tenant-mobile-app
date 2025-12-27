@@ -345,3 +345,20 @@ export interface PaymentFlowState {
   error?: string;
   isLoading?: boolean;
 }
+
+export interface TenantPropertyInfo {
+  property: Property;
+  unit: Unit;
+  landlord: {
+    name: string;
+    phone: string;
+    email?: string;
+  };
+  amenities: string[];
+  rules?: string;
+  emergencyContacts: Array<{
+    name: string;
+    phone: string;
+    type: string;
+  }>;
+}

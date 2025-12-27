@@ -1,165 +1,158 @@
-import { ScrollView, View, Text, TouchableOpacity } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, Linking, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Card } from '../../components/ui/Card';
 import { StatusBadge, getMaintenanceStatusBadge } from '../../components/ui/StatusBadge';
-
-// Mock property data
-const mockProperty = {
-  name: 'Maple Gardens Apartments',
-  address: '123 Maple Street, Springfield, IL 62701',
-  description: 'Modern apartment complex with excellent amenities and convenient location.',
-  amenities: [
-    'Swimming Pool',
-    'Fitness Center',
-    'Laundry Facilities',
-    'Parking Garage',
-    '24/7 Security',
-    'Pet-Friendly',
-  ],
-  emergencyContact: {
-    name: 'Property Management Office',
-    phone: '(555) 123-4567',
-    email: 'emergency@maplegardens.com',
-  },
-  officeHours: {
-    weekdays: '9:00 AM - 6:00 PM',
-    weekends: '10:00 AM - 4:00 PM',
-  },
-};
-
-const mockMaintenanceRequests = [
-  {
-    id: '1',
-    title: 'Leaky kitchen faucet',
-    description: 'The kitchen faucet is dripping constantly',
-    status: 'in_progress',
-    priority: 'medium',
-    submittedDate: '2023-12-15',
-  },
-  {
-    id: '2',
-    title: 'AC not cooling properly',
-    description: 'Air conditioning unit not maintaining temperature',
-    status: 'completed',
-    priority: 'high',
-    submittedDate: '2023-12-10',
-    completedDate: '2023-12-12',
-  },
-];
+import { useQuery } from '@tanstack/react-query';
+import { tenantApi } from '../../lib/api';
+import { useLease } from '../../hooks/LeaseContext';
+import { LeaseSwitcher } from '../../components/ui/LeaseSwitcher';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 
 export default function PropertyScreen() {
-  const handleEmergencyCall = () => {
-    // TODO: Implement phone call
+  const { selectedLeaseId } = useLease();
+
+  // Fetch property information
+  const { data: propertyInfo, isLoading: isPropertyLoading, error: propertyError } = useQuery({
+    queryKey: ['tenant-property', selectedLeaseId],
+    queryFn: () => tenantApi.getPropertyInfo(selectedLeaseId || undefined),
+    enabled: !!selectedLeaseId,
+  });
+
+  const handleEmergencyCall = (phoneNumber: string) => {
+    const phoneUrl = `tel:${phoneNumber}`;
+    Linking.canOpenURL(phoneUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(phoneUrl);
+        } else {
+          Alert.alert('Error', 'Unable to make phone calls on this device');
+        }
+      })
+      .catch((err) => Alert.alert('Error', 'Failed to initiate phone call'));
   };
 
   const handleSubmitMaintenance = () => {
-    // TODO: Navigate to maintenance form
+    // Navigate to maintenance form or show modal
+    Alert.alert('Maintenance', 'Feature to submit maintenance request coming soon.');
   };
+
+  const isLoading = isPropertyLoading;
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-gray-50 justify-center items-center">
+        <LoadingSpinner size="large" />
+        <Text className="text-gray-600 mt-4">Loading property details...</Text>
+      </View>
+    );
+  }
+
+  if (propertyError || !propertyInfo) {
+    return (
+      <View className="flex-1 bg-gray-50 justify-center items-center px-4">
+        <MaterialIcons name="error-outline" size={48} color="#EF4444" />
+        <Text className="text-xl font-semibold text-gray-800 mt-4 text-center">
+          Unable to Load Property Information
+        </Text>
+        <Text className="text-gray-600 mt-2 text-center">
+          {propertyError ? 'Failed to fetch property data.' : 'No property information found for this lease.'}
+        </Text>
+        <LoadingSpinner className="mt-4" />
+        {/* Helper to allow easy retry by switching lease if needed, though LeaseSwitcher is in header usually. 
+            Here we might need a go back or retry button if it persists.
+        */}
+      </View>
+    );
+  }
+
+  const { property, emergencyContacts, rules } = propertyInfo;
 
   return (
     <View className="flex-1 bg-gray-50">
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="px-4 pt-6 pb-4">
           {/* Header */}
-          <Text className="text-2xl font-semibold text-gray-800 mb-6">
-            Property Information
-          </Text>
+          <View className="flex-row justify-between items-center mb-6">
+            <Text className="text-2xl font-semibold text-gray-800">
+              Property Information
+            </Text>
+            <LeaseSwitcher />
+          </View>
 
           {/* Property Overview */}
           <Card className="mb-4">
             <View className="space-y-3">
               <Text className="text-lg font-semibold text-gray-800">
-                {mockProperty.name}
+                {property.name}
               </Text>
-              
+
               <View className="flex-row items-start space-x-2">
                 <MaterialIcons name="location-on" size={16} color="#6B7280" style={{ marginTop: 2 }} />
                 <Text className="text-gray-600 text-sm flex-1">
-                  {mockProperty.address}
+                  {property.address}, {property.city}, {property.state} {property.zipCode}
                 </Text>
               </View>
 
-              <Text className="text-gray-700 text-sm leading-5">
-                {mockProperty.description}
-              </Text>
+              {property.description && (
+                <Text className="text-gray-700 text-sm leading-5">
+                  {property.description}
+                </Text>
+              )}
             </View>
           </Card>
 
           {/* Emergency Contact */}
-          <Card className="mb-4">
-            <View className="space-y-3">
-              <View className="flex-row justify-between items-center">
-                <Text className="text-lg font-semibold text-gray-800">
-                  Emergency Contact
-                </Text>
-                <MaterialIcons name="emergency" size={20} color="#EF4444" />
-              </View>
-              
+          {emergencyContacts && emergencyContacts.length > 0 && (
+            <Card className="mb-4">
               <View className="space-y-3">
-                <Text className="font-medium text-gray-800">
-                  {mockProperty.emergencyContact.name}
-                </Text>
-                
-                <TouchableOpacity
-                  className="bg-red-500 py-3 rounded-md flex-row items-center justify-center space-x-2 active:bg-red-600"
-                  onPress={handleEmergencyCall}
-                >
-                  <MaterialIcons name="phone" size={20} color="white" />
-                  <Text className="text-white font-medium">
-                    Call Emergency: {mockProperty.emergencyContact.phone}
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-lg font-semibold text-gray-800">
+                    Emergency Contact
                   </Text>
-                </TouchableOpacity>
-
-                <Text className="text-sm text-gray-600 text-center">
-                  For non-emergency maintenance requests, use the form below
-                </Text>
-              </View>
-            </View>
-          </Card>
-
-          {/* Office Hours */}
-          <Card className="mb-4">
-            <View className="space-y-3">
-              <Text className="text-lg font-semibold text-gray-800">
-                Office Hours
-              </Text>
-              
-              <View className="space-y-2">
-                <View className="flex-row justify-between">
-                  <Text className="text-gray-600">Monday - Friday:</Text>
-                  <Text className="font-medium text-gray-800">
-                    {mockProperty.officeHours.weekdays}
-                  </Text>
+                  <MaterialIcons name="emergency" size={20} color="#EF4444" />
                 </View>
-                <View className="flex-row justify-between">
-                  <Text className="text-gray-600">Weekends:</Text>
-                  <Text className="font-medium text-gray-800">
-                    {mockProperty.officeHours.weekends}
+
+                <View className="space-y-3">
+                  {emergencyContacts.map((contact, index) => (
+                    <View key={index} className="mb-2">
+                      <Text className="font-medium text-gray-800">
+                        {contact.name} ({contact.type})
+                      </Text>
+
+                      <TouchableOpacity
+                        className="bg-red-500 py-3 rounded-md flex-row items-center justify-center space-x-2 active:bg-red-600 mt-2"
+                        onPress={() => handleEmergencyCall(contact.phone)}
+                      >
+                        <MaterialIcons name="phone" size={20} color="white" />
+                        <Text className="text-white font-medium">
+                          Call: {contact.phone}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+
+                  <Text className="text-sm text-gray-600 text-center">
+                    For non-emergency maintenance requests, use the form below
                   </Text>
                 </View>
               </View>
-            </View>
-          </Card>
+            </Card>
+          )}
 
-          {/* Amenities */}
-          <Card className="mb-4">
-            <View className="space-y-3">
-              <Text className="text-lg font-semibold text-gray-800">
-                Property Amenities
-              </Text>
-              
-              <View className="space-y-2">
-                {mockProperty.amenities.map((amenity, index) => (
-                  <View key={index} className="flex-row items-center space-x-2">
-                    <MaterialIcons name="check-circle" size={16} color="#10B981" />
-                    <Text className="text-gray-700 text-sm">
-                      {amenity}
-                    </Text>
-                  </View>
-                ))}
+          {/* Rules */}
+          {rules && (
+            <Card className="mb-4">
+              <View className="space-y-3">
+                <Text className="text-lg font-semibold text-gray-800">
+                  House Rules
+                </Text>
+                <Text className="text-gray-700 text-sm leading-5">
+                  {rules}
+                </Text>
               </View>
-            </View>
-          </Card>
+            </Card>
+          )}
+
 
           {/* Maintenance Request Form */}
           <Card className="mb-4">
@@ -167,7 +160,7 @@ export default function PropertyScreen() {
               <Text className="text-lg font-semibold text-gray-800">
                 Submit Maintenance Request
               </Text>
-              
+
               <Text className="text-gray-600 text-sm">
                 Need something fixed? Submit a maintenance request and we'll get it taken care of.
               </Text>
@@ -191,54 +184,9 @@ export default function PropertyScreen() {
                 Your Maintenance Requests
               </Text>
 
-              <View className="space-y-0">
-                {mockMaintenanceRequests.map((request, index) => (
-                  <TouchableOpacity
-                    key={request.id}
-                    className="py-3 rounded-md active:bg-gray-50"
-                  >
-                    <View className="space-y-2">
-                      <View className="flex-row justify-between items-start">
-                        <View className="flex-1 space-y-1">
-                          <Text className="font-medium text-gray-800">
-                            {request.title}
-                          </Text>
-                          <Text className="text-sm text-gray-600" numberOfLines={2}>
-                            {request.description}
-                          </Text>
-                          <View className="flex-row space-x-2 items-center mt-1">
-                            <Text className="text-xs text-gray-500">
-                              Submitted: {new Date(request.submittedDate).toLocaleDateString()}
-                            </Text>
-                            {request.completedDate && (
-                              <Text className="text-xs text-gray-500">
-                                • Completed: {new Date(request.completedDate).toLocaleDateString()}
-                              </Text>
-                            )}
-                          </View>
-                        </View>
-                        
-                        <View className="items-end space-y-1">
-                          <StatusBadge {...getMaintenanceStatusBadge(request.status)} />
-                          <Text className="text-xs text-gray-500 capitalize">
-                            {request.priority} Priority
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                    
-                    {index < mockMaintenanceRequests.length - 1 && (
-                      <View className="border-t border-gray-200 mt-3" />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {mockMaintenanceRequests.length === 0 && (
-                <Text className="text-gray-500 text-sm text-center py-4">
-                  No maintenance requests submitted yet
-                </Text>
-              )}
+              <Text className="text-gray-500 text-sm text-center py-4">
+                No maintenance requests submitted yet
+              </Text>
             </View>
           </Card>
         </View>

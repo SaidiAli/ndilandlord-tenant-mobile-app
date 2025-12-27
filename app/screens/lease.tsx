@@ -5,28 +5,18 @@ import { StatusBadge } from '../../components/ui/StatusBadge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { useQuery } from '@tanstack/react-query';
 import { tenantApi } from '../../lib/api';
-import { Lease } from '../../types';
-import { useState, useEffect } from 'react';
+import { TenantDashboardData } from '../../types';
 import { useLease } from '../../hooks/LeaseContext';
 import { LeaseSwitcher } from '../../components/ui/LeaseSwitcher';
 
 export default function LeaseScreen() {
   const { selectedLeaseId } = useLease();
-  const [currentLease, setCurrentLease] = useState<Lease | null>(null);
 
-  // Fetch lease information
-  const { data: leases, isLoading, error } = useQuery({
-    queryKey: ['tenant-lease', selectedLeaseId],
-    queryFn: () => tenantApi.getLeaseInfo(selectedLeaseId || undefined),
+  // Fetch detailed lease information via dashboard API
+  const { data: dashboardData, isLoading, error } = useQuery({
+    queryKey: ['tenant-dashboard', selectedLeaseId],
+    queryFn: () => tenantApi.getDashboard(selectedLeaseId || undefined),
   });
-
-  useEffect(() => {
-    if (leases && leases.length > 0) {
-      // Get the most recent active lease
-      const activeLease = leases.find(lease => lease.status === 'active');
-      setCurrentLease(activeLease || leases[0]);
-    }
-  }, [leases]);
 
   const handleCallLandlord = async (phoneNumber: string) => {
     try {
@@ -67,7 +57,7 @@ export default function LeaseScreen() {
     );
   }
 
-  if (error || !currentLease) {
+  if (error || !dashboardData || !dashboardData.lease) {
     return (
       <View className="flex-1 bg-gray-50 justify-center items-center px-4">
         <MaterialIcons name="error-outline" size={48} color="#EF4444" />
@@ -75,51 +65,23 @@ export default function LeaseScreen() {
           Unable to Load Lease Information
         </Text>
         <Text className="text-gray-600 mt-2 text-center">
-          {error ? 'Failed to fetch lease data. Please try again later.' : 'No lease information found. Contact your landlord if this seems incorrect.'}
+          {error ? 'Failed to fetch lease data. Please try again later.' : 'No active lease information found. Contact your landlord if this seems incorrect.'}
         </Text>
       </View>
     );
   }
 
-  // Ensure we have the minimum required data
-  if (!currentLease.startDate || !currentLease.endDate) {
-    return (
-      <View className="flex-1 bg-gray-50 justify-center items-center px-4">
-        <MaterialIcons name="warning" size={48} color="#F59E0B" />
-        <Text className="text-xl font-semibold text-gray-800 mt-4 text-center">
-          Incomplete Lease Data
-        </Text>
-        <Text className="text-gray-600 mt-2 text-center">
-          Some lease information is missing. Please contact your landlord to update your lease details.
-        </Text>
-      </View>
-    );
-  }
+  const { lease, unit, property, landlord, quickStats } = dashboardData;
 
-  const endDate = new Date(currentLease.endDate);
+  const endDate = lease.endDate ? new Date(lease.endDate) : null;
   const currentDate = new Date();
-  const daysUntilExpiry = Math.ceil(
+  const daysUntilExpiry = endDate ? Math.ceil(
     (endDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  ) : 999;
 
   // Handle invalid dates
-  const isValidEndDate = !isNaN(endDate.getTime());
-  const isValidStartDate = !isNaN(new Date(currentLease.startDate).getTime());
-
-  const getStatusBadgeProps = (status: string) => {
-    switch (status) {
-      case 'active':
-        return { status: 'success' as const, text: 'Active' };
-      case 'draft':
-        return { status: 'warning' as const, text: 'Draft' };
-      case 'expired':
-        return { status: 'error' as const, text: 'Expired' };
-      case 'terminated':
-        return { status: 'error' as const, text: 'Terminated' };
-      default:
-        return { status: 'default' as const, text: status };
-    }
-  };
+  const isValidEndDate = endDate && !isNaN(endDate.getTime());
+  const isValidStartDate = !isNaN(new Date(lease.startDate).getTime());
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -140,15 +102,15 @@ export default function LeaseScreen() {
                 <Text className="text-lg font-semibold text-gray-800">
                   Lease Status
                 </Text>
-                {/* <StatusBadge {...getStatusBadgeProps(currentLease.status)} /> */}
+                <StatusBadge status={lease.status === 'active' ? 'success' : lease.status === 'expired' ? 'error' : 'warning'} text={lease.status.charAt(0).toUpperCase() + lease.status.slice(1)} />
               </View>
 
               <View className="space-y-2">
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Lease Period:</Text>
                   <Text className="font-medium text-gray-800">
-                    {isValidStartDate && isValidEndDate
-                      ? `${new Date(currentLease.startDate).toLocaleDateString()} - ${new Date(currentLease.endDate).toLocaleDateString()}`
+                    {isValidStartDate
+                      ? `${new Date(lease.startDate).toLocaleDateString()} - ${isValidEndDate ? endDate!.toLocaleDateString() : 'Ongoing'}`
                       : 'Date information unavailable'
                     }
                   </Text>
@@ -158,6 +120,14 @@ export default function LeaseScreen() {
                     <Text className="text-gray-600">Days Remaining:</Text>
                     <Text className={`font-bold ${daysUntilExpiry < 60 ? 'text-yellow-600' : daysUntilExpiry < 0 ? 'text-red-600' : 'text-green-600'}`}>
                       {daysUntilExpiry < 0 ? 'Expired' : `${daysUntilExpiry} days`}
+                    </Text>
+                  </View>
+                )}
+                {quickStats && (
+                  <View className="flex-row justify-between">
+                    <Text className="text-gray-600">Progress:</Text>
+                    <Text className="font-medium text-gray-800">
+                      {Math.round(quickStats.leaseProgress)}% completed
                     </Text>
                   </View>
                 )}
@@ -181,7 +151,7 @@ export default function LeaseScreen() {
           </Card>
 
           {/* Property Information */}
-          {currentLease.unit?.property && (
+          {property && (
             <Card className="mb-4">
               <View className="space-y-3">
                 <Text className="text-lg font-semibold text-gray-800">
@@ -192,19 +162,19 @@ export default function LeaseScreen() {
                   <View className="flex-row justify-between">
                     <Text className="text-gray-600">Property:</Text>
                     <Text className="font-medium text-gray-800 text-right flex-1 ml-2">
-                      {currentLease.unit.property.name}
+                      {property.name}
                     </Text>
                   </View>
                   <View className="flex-row justify-between">
                     <Text className="text-gray-600">Address:</Text>
                     <Text className="font-medium text-gray-800 text-right flex-1 ml-2">
-                      {currentLease.unit.property.address}
+                      {property.address}
                     </Text>
                   </View>
                   <View className="flex-row justify-between">
                     <Text className="text-gray-600">City, State:</Text>
                     <Text className="font-medium text-gray-800">
-                      {currentLease.unit.property.city}, {currentLease.unit.property.state} {currentLease.unit.property.zipCode || ''}
+                      {property.city}, {property.state} {property.postalCode || ''}
                     </Text>
                   </View>
                 </View>
@@ -213,7 +183,7 @@ export default function LeaseScreen() {
           )}
 
           {/* Unit Details */}
-          {currentLease.unit && (
+          {unit && (
             <Card className="mb-4">
               <View className="space-y-3">
                 <Text className="text-lg font-semibold text-gray-800">
@@ -224,26 +194,26 @@ export default function LeaseScreen() {
                   <View className="flex-row justify-between">
                     <Text className="text-gray-600">Unit Number:</Text>
                     <Text className="font-medium text-gray-800">
-                      {currentLease.unit.unitNumber}
+                      {unit.unitNumber}
                     </Text>
                   </View>
                   <View className="flex-row justify-between">
                     <Text className="text-gray-600">Bedrooms:</Text>
                     <Text className="font-medium text-gray-800">
-                      {currentLease.unit.bedrooms}
+                      {unit.bedrooms}
                     </Text>
                   </View>
                   <View className="flex-row justify-between">
                     <Text className="text-gray-600">Bathrooms:</Text>
                     <Text className="font-medium text-gray-800">
-                      {currentLease.unit.bathrooms}
+                      {unit.bathrooms}
                     </Text>
                   </View>
-                  {currentLease.unit.squareFeet && (
+                  {unit.squareFeet && (
                     <View className="flex-row justify-between">
                       <Text className="text-gray-600">Square Feet:</Text>
                       <Text className="font-medium text-gray-800">
-                        {currentLease.unit.squareFeet} sq ft
+                        {unit.squareFeet} sq ft
                       </Text>
                     </View>
                   )}
@@ -263,13 +233,13 @@ export default function LeaseScreen() {
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Monthly Rent:</Text>
                   <Text className="text-lg font-bold text-[#2D5A4A]">
-                    UGX {currentLease.monthlyRent.toLocaleString()}
+                    UGX {lease.monthlyRent.toLocaleString()}
                   </Text>
                 </View>
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Security Deposit:</Text>
                   <Text className="font-medium text-gray-800">
-                    UGX {currentLease.deposit.toLocaleString()}
+                    UGX {lease.deposit.toLocaleString()}
                   </Text>
                 </View>
               </View>
@@ -277,7 +247,7 @@ export default function LeaseScreen() {
           </Card>
 
           {/* Landlord Contact */}
-          {currentLease.landlord && (
+          {landlord && (
             <Card className="mb-4">
               <View className="space-y-3">
                 <Text className="text-lg font-semibold text-gray-800">
@@ -288,34 +258,34 @@ export default function LeaseScreen() {
                   <View className="flex-row justify-between">
                     <Text className="text-gray-600">Name:</Text>
                     <Text className="font-medium text-gray-800">
-                      {currentLease.landlord.firstName} {currentLease.landlord.lastName}
+                      {landlord.name}
                     </Text>
                   </View>
 
-                  {currentLease.landlord.email && (
+                  {landlord.email && (
                     <TouchableOpacity
                       className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100 -ml-2"
-                      onPress={() => handleEmailLandlord(currentLease.landlord!.email!)}
+                      onPress={() => handleEmailLandlord(landlord.email!)}
                     >
                       <Text className="text-gray-600">Email:</Text>
                       <View className="flex-row items-center space-x-2">
                         <Text className="font-medium text-[#2D5A4A]">
-                          {currentLease.landlord.email}
+                          {landlord.email}
                         </Text>
                         <MaterialIcons name="email" size={16} color="#2D5A4A" />
                       </View>
                     </TouchableOpacity>
                   )}
 
-                  {currentLease.landlord.phone && (
+                  {landlord.phone && (
                     <TouchableOpacity
                       className="flex-row justify-between items-center py-2 px-2 rounded-md active:bg-gray-100 -ml-2"
-                      onPress={() => handleCallLandlord(currentLease.landlord!.phone!)}
+                      onPress={() => handleCallLandlord(landlord.phone!)}
                     >
                       <Text className="text-gray-600">Phone:</Text>
                       <View className="flex-row items-center space-x-2">
                         <Text className="font-medium text-[#2D5A4A]">
-                          {currentLease.landlord.phone}
+                          {landlord.phone}
                         </Text>
                         <MaterialIcons name="phone" size={16} color="#2D5A4A" />
                       </View>
@@ -344,7 +314,7 @@ export default function LeaseScreen() {
             </View>
           </Card>
         </View>
-      </ScrollView>
-    </View>
+      </ScrollView >
+    </View >
   );
 }
