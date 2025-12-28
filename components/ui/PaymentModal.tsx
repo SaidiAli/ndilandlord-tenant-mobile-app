@@ -237,7 +237,7 @@ export function PaymentModal({
                 <LoadingSpinner size="small" message="" className="my-0" />
               ) : (
                 <Text className="text-white font-semibold text-lg">
-                  Continue to Payment Method
+                  Continue to Pay
                 </Text>
               )}
             </TouchableOpacity>

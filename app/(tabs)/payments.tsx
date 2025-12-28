@@ -6,7 +6,7 @@ import { Card } from '../../components/ui/Card';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { StatusBadge, getPaymentStatusBadge } from '../../components/ui/StatusBadge';
 import { PaymentModal } from '../../components/ui/PaymentModal';
-import { MobileMoneyPinModal } from '../../components/ui/MobileMoneyPinModal';
+import { PaymentConfirmationModal } from '../../components/ui/PaymentConfirmationModal';
 import { PaymentStatusTracker } from '../../components/ui/PaymentStatusTracker';
 import { PaymentReceiptModal } from '../../components/ui/PaymentReceiptModal';
 import { useAuth } from '../../hooks/useAuth';
@@ -166,7 +166,7 @@ export default function PaymentsScreen() {
           icon: 'phone-android',
           prefixes: [],
         },
-        step: 'pin-entry',
+        step: 'confirmation',
         isLoading: false,
         error: undefined,
       }));
@@ -177,12 +177,34 @@ export default function PaymentsScreen() {
     }
   }, [balance, tenantData?.tenant?.phone, user?.phone, actualLeaseId]);
 
-  const handlePinConfirm = useCallback(async (pin: string) => {
+  const handlePaymentConfirm = useCallback(async (confirmedPhoneNumber?: string) => {
     // Get current payment flow state
-    const { amount, phoneNumber } = paymentFlow;
+    const { amount, phoneNumber, paymentMethod } = paymentFlow;
 
-    if (!balance || !amount || !phoneNumber || !actualLeaseId) {
+    // Use the confirmed phone number if provided, otherwise use the one from state
+    const effectivePhoneNumber = confirmedPhoneNumber || phoneNumber;
+
+    if (!balance || !amount || !effectivePhoneNumber || !actualLeaseId) {
       Alert.alert('Error', 'Missing payment information. Please try again.');
+      return;
+    }
+
+    // Create effective provider ID based on the phone number being used
+    // This is important because user might have changed the number in the modal
+    let effectiveProviderId = paymentMethod?.id;
+
+    if (confirmedPhoneNumber) {
+      // Re-evaluate provider if phone number changed
+      const newProvider = getMobileMoneyProvider(confirmedPhoneNumber);
+      if (newProvider === 'unknown') {
+        Alert.alert('Error', 'Invalid phone number. Please use a valid MTN or Airtel number.');
+        return;
+      }
+      effectiveProviderId = newProvider;
+    }
+
+    if (!effectiveProviderId) {
+      Alert.alert('Error', 'Unknown mobile money provider.');
       return;
     }
 
@@ -195,8 +217,8 @@ export default function PaymentsScreen() {
         return await paymentApi.initiate({
           leaseId: actualLeaseId,
           amount,
-          phoneNumber,
-          provider: 'mtn',
+          phoneNumber: effectivePhoneNumber,
+          provider: effectiveProviderId as 'mtn' | 'airtel' | 'm-sente',
           paymentMethod: 'mobile_money',
         });
       });
@@ -388,7 +410,7 @@ export default function PaymentsScreen() {
                   <Text className="text-red-700 text-center">
                     {paymentFlow.error || 'Your payment could not be processed.'}
                   </Text>
-                  <View className="flex-row space-x-3">
+                  <View className="flex-row gap-2">
                     <TouchableOpacity
                       onPress={retryPayment}
                       className="bg-red-600 px-6 py-3 rounded-md"
@@ -464,7 +486,7 @@ export default function PaymentsScreen() {
                 </Text>
 
                 <View className="flex-row items-center justify-between py-2 px-2 mb-2 rounded-md bg-yellow-50 border border-yellow-200">
-                  <View className="flex-row items-center space-x-3">
+                  <View className="flex-row items-center gap-2">
                     <MaterialIcons name="phone-android" size={24} color="#F59E0B" />
                     <View>
                       <Text className="font-medium text-gray-800">
@@ -479,7 +501,7 @@ export default function PaymentsScreen() {
                 </View>
 
                 <View className="flex-row items-center justify-between py-2 px-2 rounded-md bg-red-50 border border-red-200">
-                  <View className="flex-row items-center space-x-3">
+                  <View className="flex-row items-center gap-2">
                     <MaterialIcons name="phone-android" size={24} color="#E51A1A" />
                     <View>
                       <Text className="font-medium text-gray-800">
@@ -602,12 +624,12 @@ export default function PaymentsScreen() {
           />
         )}
 
-        {/* Mobile Money PIN Modal */}
+        {/* Payment Confirmation Modal (Replaces PIN Entry) */}
         {paymentFlow.paymentMethod && paymentFlow.phoneNumber && (
-          <MobileMoneyPinModal
-            visible={paymentFlow.step === 'pin-entry'}
+          <PaymentConfirmationModal
+            visible={paymentFlow.step === 'confirmation'}
             onClose={closePaymentFlow}
-            onConfirm={handlePinConfirm}
+            onConfirm={handlePaymentConfirm}
             amount={paymentFlow.amount || 0}
             phoneNumber={paymentFlow.phoneNumber}
             providerName={paymentFlow.paymentMethod.displayName}

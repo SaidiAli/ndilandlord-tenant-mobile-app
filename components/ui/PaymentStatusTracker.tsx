@@ -37,8 +37,8 @@ export function PaymentStatusTracker({
         onTimeout();
       }
     },
-    pollingInterval: 3000, // Poll every 3 seconds for better responsiveness
-    maxPollingDuration: 120000, // 2 minutes timeout
+    pollingInterval: 5000,
+    maxPollingDuration: 120000,
   });
 
   useEffect(() => {
