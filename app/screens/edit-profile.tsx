@@ -90,15 +90,15 @@ export default function EditProfileScreen() {
             {/* Profile Photo Section */}
             <Card className="mb-4">
               <View className="items-center space-y-4">
-                <View className="w-24 h-24 bg-[#2D5A4A] rounded-full items-center justify-center">
+                <View className="w-24 h-24 bg-[#524768] rounded-full items-center justify-center">
                   <Text className="text-white font-bold text-2xl">
                     {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
                   </Text>
                 </View>
 
                 <TouchableOpacity className="flex-row items-center gap-2">
-                  <MaterialIcons name="camera-alt" size={16} color="#2D5A4A" />
-                  <Text className="text-[#2D5A4A] font-medium">
+                  <MaterialIcons name="camera-alt" size={16} color="#524768" />
+                  <Text className="text-[#524768] font-medium">
                     Change Photo
                   </Text>
                 </TouchableOpacity>
@@ -218,7 +218,7 @@ export default function EditProfileScreen() {
               <TouchableOpacity
                 onPress={handleSave}
                 disabled={isLoading}
-                className={`py-4 rounded-md ${isLoading ? 'bg-gray-300' : 'bg-[#2D5A4A]'
+                className={`py-4 rounded-md ${isLoading ? 'bg-gray-300' : 'bg-[#524768]'
                   }`}
               >
                 <Text className="text-white font-semibold text-center text-lg">

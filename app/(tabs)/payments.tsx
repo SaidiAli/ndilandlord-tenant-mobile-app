@@ -420,7 +420,7 @@ export default function PaymentsScreen() {
                 </View>
 
                 <View className="space-y-2">
-                  <Text className="text-3xl font-bold text-[#2D5A4A]">
+                  <Text className="text-3xl font-bold text-[#524768]">
                     {formatUGX(balance.outstandingBalance)}
                   </Text>
                   <View className="flex-row justify-between">
@@ -442,7 +442,7 @@ export default function PaymentsScreen() {
                 </View>
 
                 <TouchableOpacity
-                  className="bg-[#2D5A4A] py-3 rounded-md items-center flex-row justify-center space-x-2 active:bg-[#254B3C] mt-8"
+                  className="bg-[#524768] py-3 rounded-md items-center flex-row justify-center space-x-2 active:bg-[#254B3C] mt-8"
                   onPress={handlePayNow}
                   disabled={paymentFlow.step !== 'idle'}
                 >
@@ -561,7 +561,7 @@ export default function PaymentsScreen() {
                                 </Text>
                               )}
                               {payment.status === 'completed' && (
-                                <Text className="text-xs text-[#2D5A4A] font-medium">
+                                <Text className="text-xs text-[#524768] font-medium">
                                   Tap to view receipt
                                 </Text>
                               )}

@@ -6,14 +6,14 @@ interface LoadingSpinnerProps {
   className?: string;
 }
 
-export function LoadingSpinner({ 
-  message = 'Loading...', 
+export function LoadingSpinner({
+  message = 'Loading...',
   size = 'large',
-  className = '' 
+  className = ''
 }: LoadingSpinnerProps) {
   return (
     <View className={`flex-1 justify-center items-center ${className}`}>
-      <ActivityIndicator size={size} color="#2D5A4A" className="mb-4" />
+      <ActivityIndicator size={size} color="#524768" className="mb-4" />
       {message && (
         <Text className="text-gray-600 text-center">{message}</Text>
       )}

@@ -9,7 +9,7 @@ interface SafeAreaWrapperProps extends SafeAreaViewProps {
 
 export function SafeAreaWrapper({
     children,
-    backgroundColor = '#2D5A4A',
+    backgroundColor = '#524768',
     style,
     edges = ['top'],
     ...props

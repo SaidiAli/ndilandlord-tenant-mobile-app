@@ -45,12 +45,12 @@ export function PaymentStatusTracker({
     if (transactionId) {
       startPolling();
       setElapsed(0);
-      
+
       // Start elapsed time counter
       timerRef.current = setInterval(() => {
         setElapsed(prev => prev + 1);
       }, 1000);
-      
+
       // Fade in animation
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -88,10 +88,10 @@ export function PaymentStatusTracker({
     }
 
     if (!status || status.status === 'Pending') {
-      const message = elapsed > 30 
-        ? 'Payment is taking longer than usual. Please keep this screen open.' 
+      const message = elapsed > 30
+        ? 'Payment is taking longer than usual. Please keep this screen open.'
         : 'Please confirm the payment on your mobile money app and wait...';
-      
+
       return {
         icon: 'hourglass-empty' as const,
         color: '#F59E0B',
@@ -139,7 +139,7 @@ export function PaymentStatusTracker({
   };
 
   return (
-    <Animated.View 
+    <Animated.View
       style={{ opacity: fadeAnim }}
       className={`${className}`}
     >
@@ -147,17 +147,17 @@ export function PaymentStatusTracker({
         <View className="items-center space-y-6 py-4">
           {/* Status Icon */}
           <View className="relative">
-            <View 
+            <View
               className="w-20 h-20 rounded-full items-center justify-center"
               style={{ backgroundColor: statusInfo.color + '20' }}
             >
-              <MaterialIcons 
-                name={statusInfo.icon} 
-                size={40} 
-                color={statusInfo.color} 
+              <MaterialIcons
+                name={statusInfo.icon}
+                size={40}
+                color={statusInfo.color}
               />
             </View>
-            
+
             {/* Pulsing animation for pending status */}
             {status?.status === 'Pending' && isPolling && (
               <View className="absolute inset-0">
@@ -192,7 +192,7 @@ export function PaymentStatusTracker({
                   {transactionId.substring(0, 8)}...
                 </Text>
               </View>
-              
+
               {status.vendorTransactionId && (
                 <View className="flex-row justify-between items-center py-1">
                   <Text className="text-gray-600 text-sm">Reference:</Text>
@@ -218,16 +218,14 @@ export function PaymentStatusTracker({
             <TouchableOpacity
               onPress={handleRetry}
               disabled={isPolling}
-              className={`px-6 py-2 rounded-md border ${
-                isPolling
+              className={`px-6 py-2 rounded-md border ${isPolling
                   ? 'border-gray-300 bg-gray-100'
-                  : 'border-[#2D5A4A] bg-white active:bg-[#2D5A4A]/10'
-              }`}
+                  : 'border-[#524768] bg-white active:bg-[#524768]/10'
+                }`}
             >
               <Text
-                className={`font-medium ${
-                  isPolling ? 'text-gray-400' : 'text-[#2D5A4A]'
-                }`}
+                className={`font-medium ${isPolling ? 'text-gray-400' : 'text-[#524768]'
+                  }`}
               >
                 {isPolling ? 'Checking...' : 'Check Status'}
               </Text>
@@ -244,11 +242,11 @@ export function PaymentStatusTracker({
                 <Text className="text-xs text-gray-500">Up to 2 min</Text>
               </View>
               <View className="w-full bg-gray-200 rounded-full h-2">
-                <View 
-                  className="bg-[#2D5A4A] h-2 rounded-full transition-all duration-1000" 
-                  style={{ 
+                <View
+                  className="bg-[#524768] h-2 rounded-full transition-all duration-1000"
+                  style={{
                     width: `${Math.min((elapsed / 120) * 100, 95)}%` // 120 seconds = 2 minutes
-                  }} 
+                  }}
                 />
               </View>
               {elapsed > 90 && (

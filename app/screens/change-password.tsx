@@ -129,7 +129,7 @@ export default function ChangePasswordScreen() {
             {/* Security Notice */}
             <Card className="mb-4">
               <View className="flex-row items-start gap-3">
-                <MaterialIcons name="security" size={24} color="#2D5A4A" />
+                <MaterialIcons name="security" size={24} color="#524768" />
                 <View className="flex-1">
                   <Text className="font-semibold text-gray-800 mb-1">
                     Security Notice
@@ -318,7 +318,7 @@ export default function ChangePasswordScreen() {
               <TouchableOpacity
                 onPress={handleChangePassword}
                 disabled={isLoading}
-                className={`py-4 rounded-md ${isLoading ? 'bg-gray-300' : 'bg-[#2D5A4A]'
+                className={`py-4 rounded-md ${isLoading ? 'bg-gray-300' : 'bg-[#524768]'
                   }`}
               >
                 <Text className="text-white font-semibold text-center text-lg">

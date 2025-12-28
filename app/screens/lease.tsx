@@ -232,7 +232,7 @@ export default function LeaseScreen() {
               <View className="space-y-2">
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Monthly Rent:</Text>
-                  <Text className="text-lg font-bold text-[#2D5A4A]">
+                  <Text className="text-lg font-bold text-[#524768]">
                     UGX {lease.monthlyRent.toLocaleString()}
                   </Text>
                 </View>
@@ -269,10 +269,10 @@ export default function LeaseScreen() {
                     >
                       <Text className="text-gray-600">Email:</Text>
                       <View className="flex-row items-center space-x-2">
-                        <Text className="font-medium text-[#2D5A4A]">
+                        <Text className="font-medium text-[#524768]">
                           {landlord.email}
                         </Text>
-                        <MaterialIcons name="email" size={16} color="#2D5A4A" />
+                        <MaterialIcons name="email" size={16} color="#524768" />
                       </View>
                     </TouchableOpacity>
                   )}
@@ -284,10 +284,10 @@ export default function LeaseScreen() {
                     >
                       <Text className="text-gray-600">Phone:</Text>
                       <View className="flex-row items-center space-x-2">
-                        <Text className="font-medium text-[#2D5A4A]">
+                        <Text className="font-medium text-[#524768]">
                           {landlord.phone}
                         </Text>
-                        <MaterialIcons name="phone" size={16} color="#2D5A4A" />
+                        <MaterialIcons name="phone" size={16} color="#524768" />
                       </View>
                     </TouchableOpacity>
                   )}

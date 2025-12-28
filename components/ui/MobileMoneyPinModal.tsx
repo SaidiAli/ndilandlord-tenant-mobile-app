@@ -171,12 +171,12 @@ export function MobileMoneyPinModal({
         autoCapitalize="none"
         secureTextEntry={false} // We handle masking manually
         className={`w-12 h-12 border-2 rounded-md text-center text-xl font-bold ${hasValue
-            ? hasError
-              ? 'border-red-500 bg-red-50'
-              : 'border-[#2D5A4A] bg-[#2D5A4A]/5'
-            : hasError
-              ? 'border-red-500 bg-white'
-              : 'border-gray-300 bg-white'
+          ? hasError
+            ? 'border-red-500 bg-red-50'
+            : 'border-[#524768] bg-[#524768]/5'
+          : hasError
+            ? 'border-red-500 bg-white'
+            : 'border-gray-300 bg-white'
           }`}
         editable={!isLoading && attempts < maxAttempts}
       />
@@ -216,7 +216,7 @@ export function MobileMoneyPinModal({
             {/* Provider and Amount Info */}
             <Card className="mb-8">
               <View className="items-center space-y-4">
-                <View className="w-16 h-16 bg-[#2D5A4A] rounded-full items-center justify-center">
+                <View className="w-16 h-16 bg-[#524768] rounded-full items-center justify-center">
                   <MaterialIcons name="phone-android" size={32} color="white" />
                 </View>
 
@@ -296,8 +296,8 @@ export function MobileMoneyPinModal({
                 onPress={() => handleSubmit()}
                 disabled={pin.length !== 4 || isLoading || attempts >= maxAttempts}
                 className={`py-3 rounded-md items-center ${(pin.length !== 4 || isLoading || attempts >= maxAttempts)
-                    ? 'bg-gray-300'
-                    : 'bg-[#2D5A4A]'
+                  ? 'bg-gray-300'
+                  : 'bg-[#524768]'
                   }`}
               >
                 <Text className="text-white font-semibold text-lg">

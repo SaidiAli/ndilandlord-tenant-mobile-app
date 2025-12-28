@@ -1,11 +1,11 @@
 /**
- * NDI Landlord tenant app theme colors
- * Matching the admin dashboard design system with primary color #2D5A4A
+ * Verit tenant app theme colors
+ * Matching the admin dashboard design system with primary color #524768
  */
 
 import { Platform } from 'react-native';
 
-const primaryColor = '#2D5A4A'; // Primary green from admin dashboard
+const primaryColor = '#524768'; // Primary green from admin dashboard
 const successColor = '#10B981'; // Success green
 const errorColor = '#EF4444'; // Error red
 const warningColor = '#F59E0B'; // Warning amber
@@ -51,7 +51,7 @@ export const colorPalette = {
     200: '#B6D9BC',
     300: '#8BC596',
     400: '#5F9F6F',
-    500: '#2D5A4A', // Main primary color
+    500: '#524768', // Main primary color
     600: '#254B3C',
     700: '#1E3C2F',
     800: '#162D23',

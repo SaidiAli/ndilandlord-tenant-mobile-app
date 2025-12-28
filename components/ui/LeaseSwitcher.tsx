@@ -65,7 +65,7 @@ export function LeaseSwitcher() {
                                 <TouchableOpacity
                                     onPress={() => handleSelectLease(item.id)}
                                     className={`p-4 rounded-xl mb-3 border ${selectedLease?.id === item.id
-                                        ? 'border-[#2D5A4A] bg-[#2D5A4A]/5'
+                                        ? 'border-[#524768] bg-[#524768]/5'
                                         : 'border-gray-200'
                                         }`}
                                 >
@@ -87,7 +87,7 @@ export function LeaseSwitcher() {
                                             <StatusBadge status={item.status === 'active' ? 'success' : 'info'} text={item.status} />
                                             {selectedLease?.id === item.id && (
                                                 <View className="mt-2">
-                                                    <MaterialIcons name="check-circle" size={20} color="#2D5A4A" />
+                                                    <MaterialIcons name="check-circle" size={20} color="#524768" />
                                                 </View>
                                             )}
                                         </View>

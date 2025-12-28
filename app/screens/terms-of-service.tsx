@@ -33,7 +33,7 @@ export default function TermsOfServiceScreen() {
                     1. Acceptance of Terms
                   </Text>
                   <Text className="text-gray-600 leading-6">
-                    By accessing and using the NDI Landlord application, you accept and agree to be bound by the terms and provision of this agreement.
+                    By accessing and using the Verit application, you accept and agree to be bound by the terms and provision of this agreement.
                   </Text>
                 </View>
 
@@ -42,7 +42,7 @@ export default function TermsOfServiceScreen() {
                     2. Use License
                   </Text>
                   <Text className="text-gray-600 leading-6">
-                    Permission is granted to temporarily download one copy of the materials on NDI Landlord's mobile application for personal, non-commercial transitory viewing only.
+                    Permission is granted to temporarily download one copy of the materials on Verit's mobile application for personal, non-commercial transitory viewing only.
                   </Text>
                 </View>
 
@@ -78,7 +78,7 @@ export default function TermsOfServiceScreen() {
                     6. Disclaimer
                   </Text>
                   <Text className="text-gray-600 leading-6">
-                    The materials on NDI Landlord's mobile application are provided on an 'as is' basis. NDI Landlord makes no warranties, expressed or implied.
+                    The materials on Verit's mobile application are provided on an 'as is' basis. Verit makes no warranties, expressed or implied.
                   </Text>
                 </View>
 
@@ -87,7 +87,7 @@ export default function TermsOfServiceScreen() {
                     7. Limitations
                   </Text>
                   <Text className="text-gray-600 leading-6">
-                    In no event shall NDI Landlord or its suppliers be liable for any damages arising out of the use or inability to use the materials on the application.
+                    In no event shall Verit or its suppliers be liable for any damages arising out of the use or inability to use the materials on the application.
                   </Text>
                 </View>
 
@@ -96,7 +96,7 @@ export default function TermsOfServiceScreen() {
                     8. Accuracy of Materials
                   </Text>
                   <Text className="text-gray-600 leading-6">
-                    The materials appearing on NDI Landlord's application could include technical, typographical, or photographic errors. NDI Landlord does not warrant that any of the materials are accurate, complete, or current.
+                    The materials appearing on Verit's application could include technical, typographical, or photographic errors. Verit does not warrant that any of the materials are accurate, complete, or current.
                   </Text>
                 </View>
 
@@ -105,7 +105,7 @@ export default function TermsOfServiceScreen() {
                     9. Modifications
                   </Text>
                   <Text className="text-gray-600 leading-6">
-                    NDI Landlord may revise these terms of service at any time without notice. By using this application, you are agreeing to be bound by the then current version of these terms of service.
+                    Verit may revise these terms of service at any time without notice. By using this application, you are agreeing to be bound by the then current version of these terms of service.
                   </Text>
                 </View>
 
@@ -114,13 +114,13 @@ export default function TermsOfServiceScreen() {
                     10. Contact Information
                   </Text>
                   <Text className="text-gray-600 leading-6">
-                    If you have any questions about these Terms of Service, please contact us at support@ndilandlord.com
+                    If you have any questions about these Terms of Service, please contact us at support@verit.com
                   </Text>
                 </View>
 
                 <View className="mt-6 pt-4 border-t border-gray-200">
                   <Text className="text-sm text-gray-500 text-center">
-                    Last updated: January 2024
+                    Last updated: December 2025
                   </Text>
                 </View>
               </View>

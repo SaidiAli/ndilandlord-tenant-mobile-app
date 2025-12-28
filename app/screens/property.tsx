@@ -166,11 +166,11 @@ export default function PropertyScreen() {
               </Text>
 
               <TouchableOpacity
-                className="border border-[#2D5A4A] py-3 rounded-md flex-row items-center justify-center space-x-2 active:bg-[#2D5A4A]/10"
+                className="border border-[#524768] py-3 rounded-md flex-row items-center justify-center space-x-2 active:bg-[#524768]/10"
                 onPress={handleSubmitMaintenance}
               >
-                <MaterialIcons name="build" size={20} color="#2D5A4A" />
-                <Text className="text-[#2D5A4A] font-medium">
+                <MaterialIcons name="build" size={20} color="#524768" />
+                <Text className="text-[#524768] font-medium">
                   Submit New Request
                 </Text>
               </TouchableOpacity>

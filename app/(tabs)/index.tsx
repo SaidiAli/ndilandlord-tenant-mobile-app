@@ -158,7 +158,7 @@ export default function DashboardScreen() {
                   </View>
                   <View className="flex-row justify-between">
                     <Text className="text-gray-600">Outstanding:</Text>
-                    <Text className="font-bold text-[#2D5A4A] text-lg">
+                    <Text className="font-bold text-[#524768] text-lg">
                       {formatUGX(dashboardData.payments.currentBalance)}
                     </Text>
                   </View>
@@ -202,7 +202,7 @@ export default function DashboardScreen() {
                     )}
                   </View>
                   <TouchableOpacity
-                    className="bg-[#2D5A4A] px-4 py-2 rounded-md active:bg-[#254B3C]"
+                    className="bg-[#524768] px-4 py-2 rounded-md active:bg-[#254B3C]"
                     onPress={() => router.push('/payments')}
                   >
                     <Text className="text-white font-medium">
@@ -222,7 +222,7 @@ export default function DashboardScreen() {
                   Recent Payments
                 </Text>
                 <TouchableOpacity onPress={() => router.push('/payments')}>
-                  <Text className="text-[#2D5A4A] text-sm">
+                  <Text className="text-[#524768] text-sm">
                     View All
                   </Text>
                 </TouchableOpacity>

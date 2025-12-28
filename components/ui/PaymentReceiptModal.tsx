@@ -53,7 +53,7 @@ export function PaymentReceiptModal({
     if (!receipt) return;
 
     const receiptText = `
-NDI Landlord - Payment Receipt
+Verit - Payment Receipt
 
 Receipt #: ${receipt.receiptNumber}
 Amount: ${formatUGX(receipt.amount)}
@@ -122,7 +122,7 @@ Thank you for your payment!
               </Text>
               <TouchableOpacity
                 onPress={fetchReceipt}
-                className="bg-[#2D5A4A] px-6 py-3 rounded-md mt-4"
+                className="bg-[#524768] px-6 py-3 rounded-md mt-4"
               >
                 <Text className="text-white font-semibold">Retry</Text>
               </TouchableOpacity>
@@ -134,7 +134,7 @@ Thank you for your payment!
               <View className="space-y-6 p-2">
                 {/* Company Header */}
                 <View className="items-center py-4 border-b border-gray-200">
-                  <Text className="text-2xl font-bold text-[#2D5A4A]">
+                  <Text className="text-2xl font-bold text-[#524768]">
                     {receipt.companyInfo.name}
                   </Text>
                   <Text className="text-gray-600">{receipt.companyInfo.address}</Text>
@@ -147,7 +147,7 @@ Thank you for your payment!
                     <Text className="text-xl font-bold text-gray-800">
                       PAYMENT RECEIPT
                     </Text>
-                    <Text className="text-lg font-semibold text-[#2D5A4A] mt-1">
+                    <Text className="text-lg font-semibold text-[#524768] mt-1">
                       ID: {receipt.transactionId}
                     </Text>
                   </View>
@@ -254,7 +254,7 @@ Thank you for your payment!
             <View className="flex-row gap-2">
               <TouchableOpacity
                 onPress={handleShare}
-                className="flex-1 bg-[#2D5A4A] py-3 rounded-md items-center flex-row justify-center"
+                className="flex-1 bg-[#524768] py-3 rounded-md items-center flex-row justify-center"
               >
                 <MaterialIcons name="share" size={20} color="white" />
                 <Text className="text-white font-semibold">Share Receipt</Text>

@@ -2,23 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* NDI Landlord tenant app CSS variables */
+/* Verit tenant app CSS variables */
 :root {
   --color-primary-50: #F0F8F5;
   --color-primary-100: #DCEDDF;
   --color-primary-200: #B6D9BC;
   --color-primary-300: #8BC596;
   --color-primary-400: #5F9F6F;
-  --color-primary-500: #2D5A4A;
+  --color-primary-500: #524768;
   --color-primary-600: #254B3C;
   --color-primary-700: #1E3C2F;
   --color-primary-800: #162D23;
   --color-primary-900: #0F1E18;
-  
+
   --color-success-500: #10B981;
   --color-error-500: #EF4444;
   --color-warning-500: #F59E0B;
-  
+
   --color-gray-50: #F8F9FA;
   --color-gray-100: #F3F4F6;
   --color-gray-200: #E5E7EB;
@@ -29,7 +29,7 @@
   --color-gray-700: #374151;
   --color-gray-800: #1F2937;
   --color-gray-900: #111827;
-  
+
   --color-white: #FFFFFF;
   --color-black: #000000;
 }

@@ -24,8 +24,8 @@ export default function ProfileScreen() {
   };
 
   const handleContactSupport = async () => {
-    const supportEmail = 'support@ndilandlord.com';
-    const subject = 'Support Request - NDI Landlord App';
+    const supportEmail = 'support@verit.com';
+    const subject = 'Support Request - Verit App';
     const mailtoUrl = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}`;
 
     try {
@@ -88,7 +88,7 @@ export default function ProfileScreen() {
           {/* User Info Card */}
           <Card className="mb-4">
             <View className="space-y-4 items-center">
-              <View className="w-20 h-20 bg-[#2D5A4A] rounded-full items-center justify-center">
+              <View className="w-20 h-20 bg-[#524768] rounded-full items-center justify-center">
                 <Text className="text-white font-bold text-xl">
                   {user.firstName.charAt(0)}{user.lastName.charAt(0)}
                 </Text>
@@ -107,8 +107,8 @@ export default function ProfileScreen() {
                 className="flex-row items-center gap-2 px-4 py-2 rounded-md"
                 onPress={handleEditProfile}
               >
-                <MaterialIcons name="edit" size={16} color="#2D5A4A" />
-                <Text className="text-[#2D5A4A] font-medium text-sm">
+                <MaterialIcons name="edit" size={16} color="#524768" />
+                <Text className="text-[#524768] font-medium text-sm">
                   Edit Profile
                 </Text>
               </TouchableOpacity>
@@ -221,7 +221,7 @@ export default function ProfileScreen() {
                   value={settings.pushNotifications}
                   disabled
                   onValueChange={(value) => updateSetting('pushNotifications', value)}
-                  trackColor={{ false: '#E5E7EB', true: '#2D5A4A' }}
+                  trackColor={{ false: '#E5E7EB', true: '#524768' }}
                   thumbColor={settings.pushNotifications ? '#ffffff' : '#9CA3AF'}
                 />
               </View>
@@ -241,7 +241,7 @@ export default function ProfileScreen() {
                   value={settings.autoPayment}
                   disabled
                   onValueChange={(value) => updateSetting('autoPayment', value)}
-                  trackColor={{ false: '#E5E7EB', true: '#2D5A4A' }}
+                  trackColor={{ false: '#E5E7EB', true: '#524768' }}
                   thumbColor={settings.autoPayment ? '#ffffff' : '#9CA3AF'}
                 />
               </View>
@@ -300,7 +300,7 @@ export default function ProfileScreen() {
           <Card className="mb-4">
             <View className="space-y-2 items-center">
               <Text className="text-sm text-gray-500">
-                NDI Landlord Tenant App
+                Verit Tenant App
               </Text>
               <Text className="text-sm text-gray-500">
                 Version 1.0.0

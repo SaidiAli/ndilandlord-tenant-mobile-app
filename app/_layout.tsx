@@ -57,7 +57,7 @@ export default Sentry.wrap(function RootLayout() {
                     options={{
                       headerShown: true,
                       title: 'Lease Information',
-                      headerStyle: { backgroundColor: '#2D5A4A' },
+                      headerStyle: { backgroundColor: '#524768' },
                       headerTintColor: 'white',
                       headerTitleStyle: { fontWeight: 'bold' }
                     }}
@@ -67,7 +67,7 @@ export default Sentry.wrap(function RootLayout() {
                     options={{
                       headerShown: true,
                       title: 'Property Information',
-                      headerStyle: { backgroundColor: '#2D5A4A' },
+                      headerStyle: { backgroundColor: '#524768' },
                       headerTintColor: 'white',
                       headerTitleStyle: { fontWeight: 'bold' }
                     }}
@@ -77,7 +77,7 @@ export default Sentry.wrap(function RootLayout() {
                     options={{
                       headerShown: true,
                       title: 'Help & Resources',
-                      headerStyle: { backgroundColor: '#2D5A4A' },
+                      headerStyle: { backgroundColor: '#524768' },
                       headerTintColor: 'white',
                       headerTitleStyle: { fontWeight: 'bold' }
                     }}
@@ -99,7 +99,7 @@ export default Sentry.wrap(function RootLayout() {
                     options={{ headerShown: false }}
                   />
                 </Stack>
-                <StatusBar style="light" backgroundColor="#2D5A4A" />
+                <StatusBar style="light" backgroundColor="#524768" />
               </ThemeProvider>
             </LeaseProvider>
           </SettingsProvider>

@@ -34,7 +34,7 @@ export default function MaintenanceRequestSection() {
                         Maintenance Requests
                     </Text>
                     <TouchableOpacity>
-                        <Text className="text-[#2D5A4A] text-sm">
+                        <Text className="text-[#524768] text-sm">
                             View All
                         </Text>
                     </TouchableOpacity>

@@ -43,7 +43,7 @@ const quickActions = [
     title: 'Office Hours',
     description: 'View property management hours',
     icon: 'schedule',
-    color: '#2D5A4A',
+    color: '#524768',
   },
   {
     id: '3',
@@ -116,8 +116,8 @@ export default function HelpScreen() {
                     className="flex-row items-center space-x-3 active:opacity-70"
                     onPress={() => handleTopicPress(topic.id)}
                   >
-                    <View className="w-10 h-10 bg-[#2D5A4A]/10 rounded-full items-center justify-center">
-                      <MaterialIcons name={topic.icon as any} size={20} color="#2D5A4A" />
+                    <View className="w-10 h-10 bg-[#524768]/10 rounded-full items-center justify-center">
+                      <MaterialIcons name={topic.icon as any} size={20} color="#524768" />
                     </View>
                     <View className="flex-1">
                       <Text className="font-medium text-gray-800">
@@ -140,7 +140,7 @@ export default function HelpScreen() {
               <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center">
                 <MaterialIcons name="help-outline" size={28} color="#3B82F6" />
               </View>
-              
+
               <View className="items-center">
                 <Text className="text-lg font-semibold text-gray-800">
                   Need More Help?
@@ -151,7 +151,7 @@ export default function HelpScreen() {
               </View>
 
               <TouchableOpacity
-                className="bg-[#2D5A4A] px-6 py-3 rounded-md active:bg-[#254B3C]"
+                className="bg-[#524768] px-6 py-3 rounded-md active:bg-[#254B3C]"
                 onPress={handleContactSupport}
               >
                 <Text className="text-white font-medium">
@@ -167,7 +167,7 @@ export default function HelpScreen() {
               <Text className="text-lg font-semibold text-gray-800">
                 Property Management
               </Text>
-              
+
               <View className="space-y-2">
                 <Text className="text-gray-700">
                   Maple Gardens Apartments
@@ -181,8 +181,8 @@ export default function HelpScreen() {
                 className="flex-row items-center space-x-2 mt-3"
                 onPress={openWebsite}
               >
-                <MaterialIcons name="language" size={16} color="#2D5A4A" />
-                <Text className="text-[#2D5A4A] text-sm font-medium">
+                <MaterialIcons name="language" size={16} color="#524768" />
+                <Text className="text-[#524768] text-sm font-medium">
                   Visit Our Website
                 </Text>
               </TouchableOpacity>

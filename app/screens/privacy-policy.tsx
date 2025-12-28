@@ -123,7 +123,7 @@ export default function PrivacyPolicyScreen() {
                     11. Contact Us
                   </Text>
                   <Text className="text-gray-600 leading-6">
-                    If you have any questions about this Privacy Policy, please contact us at privacy@ndilandlord.com or through the app's support section.
+                    If you have any questions about this Privacy Policy, please contact us at privacy@verit.com or through the app's support section.
                   </Text>
                 </View>
 

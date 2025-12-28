@@ -123,7 +123,7 @@ export function PaymentModal({
                 <Text className="text-lg font-semibold text-gray-800">
                   Outstanding Balance
                 </Text>
-                <Text className="text-3xl font-bold text-[#2D5A4A]">
+                <Text className="text-3xl font-bold text-[#524768]">
                   {formatUGX(balance.outstandingBalance)}
                 </Text>
                 <View className="flex-row justify-between text-sm text-gray-600">
@@ -189,7 +189,7 @@ export function PaymentModal({
                         key={suggestion}
                         onPress={() => handleSuggestionPress(suggestion)}
                         className={`px-4 py-2 rounded-md border ${isSelected
-                          ? 'bg-[#2D5A4A] border-[#2D5A4A]'
+                          ? 'bg-[#524768] border-[#524768]'
                           : 'bg-white border-gray-300'
                           }`}
                       >
@@ -230,7 +230,7 @@ export function PaymentModal({
               disabled={!amount || isLoading || !!error}
               className={`py-3 rounded-md items-center ${(!amount || isLoading || !!error)
                 ? 'bg-gray-300'
-                : 'bg-[#2D5A4A]'
+                : 'bg-[#524768]'
                 }`}
             >
               {isLoading ? (
