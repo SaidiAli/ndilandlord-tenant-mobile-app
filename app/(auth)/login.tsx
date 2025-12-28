@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useAuth } from '../../hooks/useAuth';
+import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Username is required'),
@@ -59,128 +60,131 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1"
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView className="flex-1 bg-gray-50">
-        <View className="flex-1 px-6 justify-center min-h-screen">
-          <View className="items-center">
-            {/* Logo/Brand Section */}
-            <View className="mb-8 items-center">
-              <View className="w-64 h-20 mb-2">
-                <Image
-                  source={require('../../assets/logos/logos-02.svg')}
-                  style={{ width: '100%', height: '100%' }}
-                  contentFit="contain"
-                />
+    <SafeAreaWrapper>
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView className="flex-1 bg-gray-50">
+          <View className="flex-1 px-6 justify-center min-h-screen">
+            <View className="items-center">
+              {/* Logo/Brand Section */}
+              <View className="mb-8 items-center">
+                <View className="w-64 h-20 mb-2">
+                  <Image
+                    source={require('../../assets/logos/logos-02.svg')}
+                    style={{ width: '100%', height: '100%' }}
+                    contentFit="contain"
+                  />
+                </View>
+                <Text className="text-lg font-semibold text-gray-800 text-center">
+                  Tenant Portal
+                </Text>
               </View>
-              <Text className="text-lg font-semibold text-gray-800 text-center">
-                Tenant Portal
-              </Text>
-            </View>
 
-            {/* Login Form */}
-            <View className="w-full max-w-sm">
-              <View className="space-y-4">
-                <View>
-                  <Text className="text-2xl font-semibold text-gray-800 text-center">
-                    Welcome Back
-                  </Text>
-                  <Text className="text-sm font-semibold text-gray-600 text-center mt-2">
-                    Sign in to access your tenant portal
-                  </Text>
-                </View>
-
-                {/* Username Field */}
-                <View className="w-full">
-                  <Text className="text-sm font-medium text-gray-700 mb-2">
-                    Username
-                  </Text>
-                  <Controller
-                    control={control}
-                    name="username"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <View className="relative">
-                        <View className="absolute left-3 top-3 z-10">
-                          <MaterialIcons name="person" size={20} color="#6B7280" />
-                        </View>
-                        <TextInput
-                          className={`w-full pl-12 pr-4 py-3 border rounded-md bg-white ${errors.username ? 'border-red-500' : 'border-gray-300'
-                            }`}
-                          placeholder="Enter your username"
-                          onBlur={onBlur}
-                          onChangeText={onChange}
-                          value={value}
-                          autoCapitalize="none"
-                        />
-                      </View>
-                    )}
-                  />
-                  {errors.username && (
-                    <Text className="text-red-500 text-sm mt-1">
-                      {errors.username.message}
+              {/* Login Form */}
+              <View className="w-full max-w-sm">
+                <View className="space-y-4">
+                  <View>
+                    <Text className="text-2xl font-semibold text-gray-800 text-center">
+                      Welcome Back
                     </Text>
-                  )}
-                </View>
-
-                {/* Password Field */}
-                <View className="w-full">
-                  <Text className="text-sm font-medium text-gray-700 mb-2">
-                    Password
-                  </Text>
-                  <Controller
-                    control={control}
-                    name="password"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <View className="relative">
-                        <View className="absolute left-3 top-3 z-10">
-                          <MaterialIcons name="lock" size={20} color="#6B7280" />
-                        </View>
-                        <TextInput
-                          className={`w-full pl-12 pr-4 py-3 border rounded-md bg-white ${errors.password ? 'border-red-500' : 'border-gray-300'
-                            }`}
-                          placeholder="Enter your password"
-                          onBlur={onBlur}
-                          onChangeText={onChange}
-                          value={value}
-                          secureTextEntry
-                        />
-                      </View>
-                    )}
-                  />
-                  {errors.password && (
-                    <Text className="text-red-500 text-sm mt-1">
-                      {errors.password.message}
-                    </Text>
-                  )}
-                </View>
-
-                {/* Sign In Button */}
-                <TouchableOpacity
-                  onPress={handleSubmit(onSubmit)}
-                  disabled={isLoading}
-                  className={`w-full py-3 rounded-md mt-6 ${isLoading ? 'bg-gray-400' : 'bg-[#524768] active:bg-[#254B3C]'
-                    }`}
-                >
-                  <View className="flex-row justify-center items-center">
-                    {isLoading && (
-                      <ActivityIndicator color="white" size="small" className="mr-2" />
-                    )}
-                    <Text className="text-white font-medium text-center">
-                      {isLoading ? 'Signing in...' : 'Sign In'}
+                    <Text className="text-sm font-semibold text-gray-600 text-center mt-2">
+                      Sign in to access your tenant portal
                     </Text>
                   </View>
-                </TouchableOpacity>
 
-                <Text className="text-sm text-gray-500 text-center mt-6">
-                  Need help? Contact your property manager
-                </Text>
+                  {/* Username Field */}
+                  <View className="w-full">
+                    <Text className="text-sm font-medium text-gray-700 mb-2">
+                      Username
+                    </Text>
+                    <Controller
+                      control={control}
+                      name="username"
+                      render={({ field: { onChange, onBlur, value } }) => (
+                        <View className="relative">
+                          <View className="absolute left-3 top-3 z-10">
+                            <MaterialIcons name="person" size={20} color="#6B7280" />
+                          </View>
+                          <TextInput
+                            className={`w-full pl-12 pr-4 py-3 border rounded-md bg-white ${errors.username ? 'border-red-500' : 'border-gray-300'
+                              }`}
+                            placeholder="Enter your username"
+                            onBlur={onBlur}
+                            onChangeText={onChange}
+                            value={value}
+                            autoCapitalize="none"
+                            secureTextEntry={false}
+                          />
+                        </View>
+                      )}
+                    />
+                    {errors.username && (
+                      <Text className="text-red-500 text-sm mt-1">
+                        {errors.username.message}
+                      </Text>
+                    )}
+                  </View>
+
+                  {/* Password Field */}
+                  <View className="w-full">
+                    <Text className="text-sm font-medium text-gray-700 mb-2">
+                      Password
+                    </Text>
+                    <Controller
+                      control={control}
+                      name="password"
+                      render={({ field: { onChange, onBlur, value } }) => (
+                        <View className="relative">
+                          <View className="absolute left-3 top-3 z-10">
+                            <MaterialIcons name="lock" size={20} color="#6B7280" />
+                          </View>
+                          <TextInput
+                            className={`w-full pl-12 pr-4 py-3 border rounded-md bg-white ${errors.password ? 'border-red-500' : 'border-gray-300'
+                              }`}
+                            placeholder="Enter your password"
+                            onBlur={onBlur}
+                            onChangeText={onChange}
+                            value={value}
+                            secureTextEntry
+                          />
+                        </View>
+                      )}
+                    />
+                    {errors.password && (
+                      <Text className="text-red-500 text-sm mt-1">
+                        {errors.password.message}
+                      </Text>
+                    )}
+                  </View>
+
+                  {/* Sign In Button */}
+                  <TouchableOpacity
+                    onPress={handleSubmit(onSubmit)}
+                    disabled={isLoading}
+                    className={`w-full py-3 rounded-md mt-6 ${isLoading ? 'bg-gray-400' : 'bg-[#524768] active:bg-[#254B3C]'
+                      }`}
+                  >
+                    <View className="flex-row justify-center items-center">
+                      {isLoading && (
+                        <ActivityIndicator color="white" size="small" className="mr-2" />
+                      )}
+                      <Text className="text-white font-medium text-center">
+                        {isLoading ? 'Signing in...' : 'Sign In'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <Text className="text-sm text-gray-500 text-center mt-6">
+                    Need help? Contact your property manager
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaWrapper>
   );
 }

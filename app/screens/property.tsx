@@ -7,6 +7,7 @@ import { tenantApi } from '../../lib/api';
 import { useLease } from '../../hooks/LeaseContext';
 import { LeaseSwitcher } from '../../components/ui/LeaseSwitcher';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
 
 export default function PropertyScreen() {
   const { selectedLeaseId } = useLease();
@@ -68,129 +69,131 @@ export default function PropertyScreen() {
   const { property, emergencyContacts, rules } = propertyInfo;
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View className="px-4 pt-6 pb-4">
-          {/* Header */}
-          <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-2xl font-semibold text-gray-800">
-              Property Information
-            </Text>
-            <LeaseSwitcher />
-          </View>
-
-          {/* Property Overview */}
-          <Card className="mb-4">
-            <View className="space-y-3">
-              <Text className="text-lg font-semibold text-gray-800">
-                {property.name}
+    <SafeAreaWrapper>
+      <View className="flex-1 bg-gray-50">
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View className="px-4 pt-6 pb-4">
+            {/* Header */}
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-2xl font-semibold text-gray-800">
+                Property Information
               </Text>
-
-              <View className="flex-row items-start space-x-2">
-                <MaterialIcons name="location-on" size={16} color="#6B7280" style={{ marginTop: 2 }} />
-                <Text className="text-gray-600 text-sm flex-1">
-                  {property.address}, {property.city}, {property.state} {property.zipCode}
-                </Text>
-              </View>
-
-              {property.description && (
-                <Text className="text-gray-700 text-sm leading-5">
-                  {property.description}
-                </Text>
-              )}
+              <LeaseSwitcher />
             </View>
-          </Card>
 
-          {/* Emergency Contact */}
-          {emergencyContacts && emergencyContacts.length > 0 && (
-            <Card className="mb-4">
-              <View className="space-y-3">
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-lg font-semibold text-gray-800">
-                    Emergency Contact
-                  </Text>
-                  <MaterialIcons name="emergency" size={20} color="#EF4444" />
-                </View>
-
-                <View className="space-y-3">
-                  {emergencyContacts.map((contact, index) => (
-                    <View key={index} className="mb-2">
-                      <Text className="font-medium text-gray-800">
-                        {contact.name} ({contact.type})
-                      </Text>
-
-                      <TouchableOpacity
-                        className="bg-red-500 py-3 rounded-md flex-row items-center justify-center space-x-2 active:bg-red-600 mt-2"
-                        onPress={() => handleEmergencyCall(contact.phone)}
-                      >
-                        <MaterialIcons name="phone" size={20} color="white" />
-                        <Text className="text-white font-medium">
-                          Call: {contact.phone}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-
-                  <Text className="text-sm text-gray-600 text-center">
-                    For non-emergency maintenance requests, use the form below
-                  </Text>
-                </View>
-              </View>
-            </Card>
-          )}
-
-          {/* Rules */}
-          {rules && (
+            {/* Property Overview */}
             <Card className="mb-4">
               <View className="space-y-3">
                 <Text className="text-lg font-semibold text-gray-800">
-                  House Rules
+                  {property.name}
                 </Text>
-                <Text className="text-gray-700 text-sm leading-5">
-                  {rules}
+
+                <View className="flex-row items-start space-x-2">
+                  <MaterialIcons name="location-on" size={16} color="#6B7280" style={{ marginTop: 2 }} />
+                  <Text className="text-gray-600 text-sm flex-1">
+                    {property.address}, {property.city}, {property.state} {property.zipCode}
+                  </Text>
+                </View>
+
+                {property.description && (
+                  <Text className="text-gray-700 text-sm leading-5">
+                    {property.description}
+                  </Text>
+                )}
+              </View>
+            </Card>
+
+            {/* Emergency Contact */}
+            {emergencyContacts && emergencyContacts.length > 0 && (
+              <Card className="mb-4">
+                <View className="space-y-3">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-lg font-semibold text-gray-800">
+                      Emergency Contact
+                    </Text>
+                    <MaterialIcons name="emergency" size={20} color="#EF4444" />
+                  </View>
+
+                  <View className="space-y-3">
+                    {emergencyContacts.map((contact, index) => (
+                      <View key={index} className="mb-2">
+                        <Text className="font-medium text-gray-800">
+                          {contact.name} ({contact.type})
+                        </Text>
+
+                        <TouchableOpacity
+                          className="bg-red-500 py-3 rounded-md flex-row items-center justify-center space-x-2 active:bg-red-600 mt-2"
+                          onPress={() => handleEmergencyCall(contact.phone)}
+                        >
+                          <MaterialIcons name="phone" size={20} color="white" />
+                          <Text className="text-white font-medium">
+                            Call: {contact.phone}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+
+                    <Text className="text-sm text-gray-600 text-center">
+                      For non-emergency maintenance requests, use the form below
+                    </Text>
+                  </View>
+                </View>
+              </Card>
+            )}
+
+            {/* Rules */}
+            {rules && (
+              <Card className="mb-4">
+                <View className="space-y-3">
+                  <Text className="text-lg font-semibold text-gray-800">
+                    House Rules
+                  </Text>
+                  <Text className="text-gray-700 text-sm leading-5">
+                    {rules}
+                  </Text>
+                </View>
+              </Card>
+            )}
+
+
+            {/* Maintenance Request Form */}
+            <Card className="mb-4">
+              <View className="space-y-3">
+                <Text className="text-lg font-semibold text-gray-800">
+                  Submit Maintenance Request
+                </Text>
+
+                <Text className="text-gray-600 text-sm">
+                  Need something fixed? Submit a maintenance request and we'll get it taken care of.
+                </Text>
+
+                <TouchableOpacity
+                  className="border border-[#524768] py-3 rounded-md flex-row items-center justify-center space-x-2 active:bg-[#524768]/10"
+                  onPress={handleSubmitMaintenance}
+                >
+                  <MaterialIcons name="build" size={20} color="#524768" />
+                  <Text className="text-[#524768] font-medium">
+                    Submit New Request
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Card>
+
+            {/* Recent Maintenance Requests */}
+            <Card className="mb-6">
+              <View className="space-y-3">
+                <Text className="text-lg font-semibold text-gray-800">
+                  Your Maintenance Requests
+                </Text>
+
+                <Text className="text-gray-500 text-sm text-center py-4">
+                  No maintenance requests submitted yet
                 </Text>
               </View>
             </Card>
-          )}
-
-
-          {/* Maintenance Request Form */}
-          <Card className="mb-4">
-            <View className="space-y-3">
-              <Text className="text-lg font-semibold text-gray-800">
-                Submit Maintenance Request
-              </Text>
-
-              <Text className="text-gray-600 text-sm">
-                Need something fixed? Submit a maintenance request and we'll get it taken care of.
-              </Text>
-
-              <TouchableOpacity
-                className="border border-[#524768] py-3 rounded-md flex-row items-center justify-center space-x-2 active:bg-[#524768]/10"
-                onPress={handleSubmitMaintenance}
-              >
-                <MaterialIcons name="build" size={20} color="#524768" />
-                <Text className="text-[#524768] font-medium">
-                  Submit New Request
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Card>
-
-          {/* Recent Maintenance Requests */}
-          <Card className="mb-6">
-            <View className="space-y-3">
-              <Text className="text-lg font-semibold text-gray-800">
-                Your Maintenance Requests
-              </Text>
-
-              <Text className="text-gray-500 text-sm text-center py-4">
-                No maintenance requests submitted yet
-              </Text>
-            </View>
-          </Card>
-        </View>
-      </ScrollView>
-    </View>
+          </View>
+        </ScrollView>
+      </View>
+    </SafeAreaWrapper>
   );
 }
