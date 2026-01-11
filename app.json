@@ -55,8 +55,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "eda2415c-e732-4a13-b953-d237a1d62a14"
+        "projectId": "6c0dc553-30fd-4de7-87e2-d5f92e05b8a8"
       }
-    }
+    },
+    "owner": "aptus"
   }
 }
