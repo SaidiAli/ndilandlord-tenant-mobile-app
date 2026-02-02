@@ -225,26 +225,6 @@ export default function ProfileScreen() {
                     thumbColor={settings.pushNotifications ? '#ffffff' : '#9CA3AF'}
                   />
                 </View>
-
-                <View className="border-t border-gray-200" />
-
-                <View className="flex-row justify-between items-center py-2">
-                  <View className="flex-row items-center gap-2">
-                    <MaterialIcons name="credit-card" size={20} color="#6B7280" />
-                    <View>
-                      <Text className="font-medium text-gray-800">
-                        Auto-Payment
-                      </Text>
-                    </View>
-                  </View>
-                  <Switch
-                    value={settings.autoPayment}
-                    disabled
-                    onValueChange={(value) => updateSetting('autoPayment', value)}
-                    trackColor={{ false: '#E5E7EB', true: '#524768' }}
-                    thumbColor={settings.autoPayment ? '#ffffff' : '#9CA3AF'}
-                  />
-                </View>
               </View>
             </Card>
 

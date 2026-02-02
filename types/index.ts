@@ -364,3 +364,16 @@ export interface TenantPropertyInfo {
     type: string;
   }>;
 }
+
+export interface PaymentScheduleItem {
+  id: string;
+  leaseId: string;
+  paymentNumber: number;
+  dueDate: string;
+  amount: number;
+  periodStart: string;
+  periodEnd: string;
+  isPaid: boolean;
+  paidAmount: number;
+  status: 'upcoming' | 'pending' | 'overdue' | 'paid' | 'partial';
+}

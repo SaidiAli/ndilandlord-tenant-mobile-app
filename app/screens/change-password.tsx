@@ -144,7 +144,7 @@ export default function ChangePasswordScreen() {
 
             {/* Form Fields */}
             <Card className="mb-4">
-              <View className="space-y-4">
+              <View className="gap-4">
                 {/* Current Password */}
                 <View>
                   <Text className="text-sm font-medium text-gray-700 mb-1">
@@ -289,27 +289,6 @@ export default function ChangePasswordScreen() {
                     </Text>
                   )}
                 </View>
-              </View>
-            </Card>
-
-            {/* Password Tips */}
-            <Card className="mb-6">
-              <Text className="font-semibold text-gray-800 mb-2">
-                Password Tips
-              </Text>
-              <View className="space-y-1">
-                <Text className="text-sm text-gray-600">
-                  • Use at least 6 characters (8+ recommended)
-                </Text>
-                <Text className="text-sm text-gray-600">
-                  • Include uppercase and lowercase letters
-                </Text>
-                <Text className="text-sm text-gray-600">
-                  • Add numbers and special characters
-                </Text>
-                <Text className="text-sm text-gray-600">
-                  • Avoid common words or personal information
-                </Text>
               </View>
             </Card>
 

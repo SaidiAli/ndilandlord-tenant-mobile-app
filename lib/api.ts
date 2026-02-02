@@ -11,6 +11,7 @@ import {
   PaymentStatusResponse,
   PaymentReceipt,
   PaymentWithDetails,
+  PaymentScheduleItem,
   LeaseApiResponse,
   transformLeaseResponse,
   TenantDashboardData,
@@ -21,8 +22,8 @@ import * as Sentry from '@sentry/react-native';
 
 // Create axios instance
 const api = axios.create({
-  // baseURL: 'http://192.168.1.77:4000/api',
-  baseURL: 'https://dcgc8okokso0ko88cwwgogo0.aptusagency.com/api',
+  baseURL: 'http://192.168.1.4:4000/api',
+  // baseURL: 'https://dcgc8okokso0ko88cwwgogo0.aptusagency.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -295,6 +296,26 @@ export const paymentApi = {
       return response.data.data;
     } catch (error: any) {
       throw new Error(error.message || 'Failed to get payments');
+    }
+  },
+
+  /**
+   * Get payment schedule for a specific lease
+   */
+  getSchedule: async (leaseId: string): Promise<PaymentScheduleItem[]> => {
+    try {
+      const response = await api.get<ApiResponse<PaymentScheduleItem[]>>(`/payment-schedules/?leaseId=${leaseId}`);
+
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to get payment schedule');
+      }
+
+      return response.data.data || [];
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return [];
+      }
+      throw new Error(error.message || 'Failed to get payment schedule');
     }
   },
 };

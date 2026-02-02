@@ -98,6 +98,26 @@ export default Sentry.wrap(function RootLayout() {
                     name="screens/privacy-policy"
                     options={{ headerShown: false }}
                   />
+                  <Stack.Screen
+                    name="screens/payment-history"
+                    options={{
+                      headerShown: true,
+                      title: 'Payment History',
+                      headerStyle: { backgroundColor: '#524768' },
+                      headerTintColor: 'white',
+                      headerTitleStyle: { fontWeight: 'bold' }
+                    }}
+                  />
+                  <Stack.Screen
+                    name="screens/payment-schedule"
+                    options={{
+                      headerShown: true,
+                      title: 'Payment Schedule',
+                      headerStyle: { backgroundColor: '#524768' },
+                      headerTintColor: 'white',
+                      headerTitleStyle: { fontWeight: 'bold' }
+                    }}
+                  />
                 </Stack>
                 <StatusBar style="light" backgroundColor="#524768" />
               </ThemeProvider>

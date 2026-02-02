@@ -224,7 +224,7 @@ export default function DashboardScreen() {
                   <Text className="text-lg font-semibold text-gray-800">
                     Recent Payments
                   </Text>
-                  <TouchableOpacity onPress={() => router.push('/payments')}>
+                  <TouchableOpacity onPress={() => router.push('/screens/payment-history')}>
                     <Text className="text-[#524768] text-sm">
                       View All
                     </Text>
