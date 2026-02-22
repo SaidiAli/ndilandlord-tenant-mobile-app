@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { paymentApi } from '../lib/api';
 import { PaymentStatusResponse } from '../types';
 
@@ -28,176 +29,84 @@ export function usePaymentStatus({
   pollingInterval = 5000, // 5 seconds
   maxPollingDuration = 180000, // 3 minutes
 }: UsePaymentStatusOptions): UsePaymentStatusReturn {
-  const [status, setStatus] = useState<PaymentStatusResponse | null>(null);
   const [isPolling, setIsPolling] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [timeoutError, setTimeoutError] = useState<string | null>(null);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const startTimeRef = useRef<number | null>(null);
-  const isPollingRef = useRef(false);
-  
   // Use refs to store callbacks to avoid dependency issues
   const onSuccessRef = useRef(onSuccess);
   const onFailedRef = useRef(onFailed);
   const onErrorRef = useRef(onError);
-  
-  // Update refs when callbacks change
-  useEffect(() => {
-    onSuccessRef.current = onSuccess;
-  }, [onSuccess]);
-  
-  useEffect(() => {
-    onFailedRef.current = onFailed;
-  }, [onFailed]);
-  
-  useEffect(() => {
-    onErrorRef.current = onError;
-  }, [onError]);
 
-  // Clear polling function using refs to avoid circular dependencies
-  const clearPolling = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+  useEffect(() => { onSuccessRef.current = onSuccess; }, [onSuccess]);
+  useEffect(() => { onFailedRef.current = onFailed; }, [onFailed]);
+  useEffect(() => { onErrorRef.current = onError; }, [onError]);
+
+  const { data: status, error: queryErr, refetch: queryRefetch } = useQuery({
+    queryKey: ['payment-status', transactionId],
+    queryFn: () => paymentApi.getStatus(transactionId),
+    enabled: isPolling && !!transactionId,
+    // In TanStack Query v4 the refetchInterval callback receives (data, query)
+    refetchInterval: (data: PaymentStatusResponse | undefined) => {
+      if (data?.status === 'Success' || data?.status === 'Failed' || !isPolling) return false;
+      return pollingInterval;
+    },
+    retry: false,
+  });
+
+  // Fire success/failed callbacks when status changes
+  useEffect(() => {
+    if (status?.status === 'Success') {
+      onSuccessRef.current?.(status);
+      setIsPolling(false);
+    } else if (status?.status === 'Failed') {
+      onFailedRef.current?.(status);
+      setIsPolling(false);
     }
-    isPollingRef.current = false;
-    setIsPolling(false);
-    startTimeRef.current = null;
-  }, []);
+  }, [status?.status]);
+
+  // Surface query errors to the onError callback
+  useEffect(() => {
+    if (queryErr) {
+      const errorMessage = (queryErr as Error).message || 'Failed to get payment status';
+      onErrorRef.current?.(errorMessage);
+    }
+  }, [queryErr]);
+
+  // Timeout after maxPollingDuration
+  useEffect(() => {
+    if (!isPolling) return;
+    setTimeoutError(null);
+    const timer = setTimeout(() => {
+      const msg = 'Payment processing timed out. Please check your payment status manually.';
+      setTimeoutError(msg);
+      onErrorRef.current?.(msg);
+      setIsPolling(false);
+    }, maxPollingDuration);
+    return () => clearTimeout(timer);
+  }, [isPolling, maxPollingDuration]);
 
   const startPolling = useCallback(() => {
-    // Check ref instead of state to avoid stale closure
-    if (isPollingRef.current || !transactionId) return;
-
-    isPollingRef.current = true;
+    if (isPolling || !transactionId) return;
+    setTimeoutError(null);
     setIsPolling(true);
-    setError(null);
-    startTimeRef.current = Date.now();
-
-    // Define polling function inline to avoid circular dependencies
-    const pollStatus = async (): Promise<boolean> => {
-      try {
-        setError(null);
-        const statusData = await paymentApi.getStatus(transactionId);
-        setStatus(statusData);
-
-        // Check if payment is complete
-        if (statusData.status === 'Success') {
-          onSuccessRef.current?.(statusData);
-          // Clear polling inline to avoid circular dependency
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
-          isPollingRef.current = false;
-          setIsPolling(false);
-          startTimeRef.current = null;
-          return true; // Stop polling
-        } else if (statusData.status === 'Failed') {
-          onFailedRef.current?.(statusData);
-          // Clear polling inline to avoid circular dependency
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
-          isPollingRef.current = false;
-          setIsPolling(false);
-          startTimeRef.current = null;
-          return true; // Stop polling
-        }
-        return false; // Continue polling
-      } catch (err: any) {
-        const errorMessage = err.message || 'Failed to get payment status';
-        setError(errorMessage);
-        onErrorRef.current?.(errorMessage);
-        return false; // Continue polling on error
-      }
-    };
-
-    // Fetch immediately
-    pollStatus();
-
-    // Set up polling interval
-    intervalRef.current = setInterval(async () => {
-      // Double check if we should still be polling
-      if (!isPollingRef.current) {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-        return;
-      }
-
-      const currentTime = Date.now();
-      const elapsedTime = startTimeRef.current ? currentTime - startTimeRef.current : 0;
-
-      // Stop polling after max duration
-      if (elapsedTime >= maxPollingDuration) {
-        const timeoutError = 'Payment processing timed out. Please check your payment status manually.';
-        setError(timeoutError);
-        onErrorRef.current?.(timeoutError);
-        // Clear polling inline
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-        isPollingRef.current = false;
-        setIsPolling(false);
-        startTimeRef.current = null;
-        return;
-      }
-
-      try {
-        const shouldStop = await pollStatus();
-        if (shouldStop) {
-          return; // Polling already stopped in pollStatus
-        }
-      } catch (err) {
-        // Continue polling on error, but limit retries
-        console.warn('Payment status polling error:', err);
-      }
-    }, pollingInterval);
-  }, [transactionId, pollingInterval, maxPollingDuration]);
+  }, [isPolling, transactionId]);
 
   const stopPolling = useCallback(() => {
-    clearPolling();
-    setError(null);
-  }, [clearPolling]);
+    setIsPolling(false);
+    setTimeoutError(null);
+  }, []);
 
   const refetch = useCallback(async () => {
     if (!transactionId) {
       throw new Error('No transaction ID provided');
     }
-    
-    try {
-      setError(null);
-      const statusData = await paymentApi.getStatus(transactionId);
-      setStatus(statusData);
-      return statusData;
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to get payment status';
-      setError(errorMessage);
-      onErrorRef.current?.(errorMessage);
-      throw err;
-    }
-  }, [transactionId]);
+    await queryRefetch();
+  }, [transactionId, queryRefetch]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      clearPolling();
-    };
-  }, [clearPolling]);
-
-  // Stop polling when transaction ID changes
-  useEffect(() => {
-    if (intervalRef.current) {
-      clearPolling();
-    }
-  }, [transactionId, clearPolling]);
+  const error = timeoutError || (queryErr ? (queryErr as Error).message || 'Failed to get payment status' : null);
 
   return {
-    status,
+    status: status ?? null,
     isPolling,
     error,
     startPolling,

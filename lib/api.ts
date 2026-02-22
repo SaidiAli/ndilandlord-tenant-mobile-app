@@ -13,17 +13,18 @@ import {
   PaymentWithDetails,
   PaymentScheduleItem,
   LeaseApiResponse,
-  transformLeaseResponse,
   TenantDashboardData,
   TenantPropertyInfo
 } from '../types';
 
 import * as Sentry from '@sentry/react-native';
 
+// export const API_BASE_URL = 'https://dcgc8okokso0ko88cwwgogo0.aptusagency.com/api';
+export const API_BASE_URL = 'http://192.168.1.3:4000/api';
+
 // Create axios instance
 const api = axios.create({
-  // baseURL: 'http://192.168.1.4:4000/api',
-  baseURL: 'https://dcgc8okokso0ko88cwwgogo0.aptusagency.com/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

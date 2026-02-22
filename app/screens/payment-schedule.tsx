@@ -1,12 +1,12 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { ScrollView, View, Text, RefreshControl } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useQuery } from '@tanstack/react-query';
 import { Card } from '../../components/ui/Card';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { ErrorView } from '../../components/ui/ErrorView';
-import { useTenantLease } from '../../hooks/useTenantLease';
-import { useRetry } from '../../hooks/useRetry';
+import { useLease } from '../../hooks/LeaseContext';
 import { paymentApi } from '../../lib/api';
 import { PaymentScheduleItem } from '../../types';
 import { formatUGX } from '../../lib/currency';
@@ -43,75 +43,18 @@ const StatusBadge = ({ status }: { status: ScheduleStatus }) => {
 };
 
 export default function PaymentScheduleScreen() {
-  const { leaseId, isLoading: isLeaseLoading, error: leaseError } = useTenantLease();
-  const { execute: executeWithRetry, isRetrying } = useRetry<any>({ maxAttempts: 3, retryDelay: 1000 });
+  const { selectedLeaseId } = useLease();
 
-  const [schedule, setSchedule] = useState<PaymentScheduleItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const actualLeaseId = leaseId;
-
-  const fetchSchedule = useCallback(async (showLoading = true) => {
-    try {
-      if (showLoading) setIsLoading(true);
-      setError(null);
-
-      if (!actualLeaseId) {
-        throw new Error('No active lease found. Please contact your landlord.');
-      }
-
-      const result = await executeWithRetry(async () => {
-        return await paymentApi.getSchedule(actualLeaseId);
-      });
-
-      setSchedule(result);
-    } catch (err: any) {
-      console.error('Failed to fetch payment schedule:', err);
-
-      let errorMessage = 'Failed to load payment schedule';
-
-      if (err.message.includes('Network Error') || err.message.includes('connection')) {
-        errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
-      } else if (err.message.includes('timeout')) {
-        errorMessage = 'Request timed out. Please check your connection and try again.';
-      } else if (err.message.includes('401') || err.message.includes('unauthorized')) {
-        errorMessage = 'Session expired. Please log in again.';
-      } else if (err.message.includes('403') || err.message.includes('forbidden')) {
-        errorMessage = 'Access denied. Please contact support.';
-      } else if (err.message.includes('404')) {
-        errorMessage = 'Payment schedule not found. Please contact support.';
-      } else if (err.message.includes('500')) {
-        errorMessage = 'Server error. Please try again in a few moments.';
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-
-      setError(errorMessage);
-    } finally {
-      if (showLoading) setIsLoading(false);
-    }
-  }, [actualLeaseId, executeWithRetry]);
-
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    await fetchSchedule(false);
-    setIsRefreshing(false);
-  }, [fetchSchedule]);
-
-  React.useEffect(() => {
-    if (actualLeaseId) {
-      fetchSchedule();
-    }
-  }, [actualLeaseId, fetchSchedule]);
+  const { data: schedule = [], isLoading, isRefetching, error, refetch } = useQuery({
+    queryKey: ['payment-schedule', selectedLeaseId],
+    queryFn: () => paymentApi.getSchedule(selectedLeaseId!),
+    enabled: !!selectedLeaseId,
+  });
 
   useFocusEffect(
     useCallback(() => {
-      if (actualLeaseId) {
-        fetchSchedule(false);
-      }
-    }, [actualLeaseId, fetchSchedule])
+      refetch();
+    }, [refetch])
   );
 
   // Calculate summary statistics
@@ -119,22 +62,11 @@ export default function PaymentScheduleScreen() {
   const overdueCount = schedule.filter(item => item.status === 'overdue').length;
   const nextDueItem = schedule.find(item => item.status === 'pending' || item.status === 'upcoming');
 
-  if (isLeaseLoading || isLoading) {
-    const message = isRetrying ? "Retrying connection..." : "Loading payment schedule...";
-    return <LoadingSpinner message={message} />;
+  if (isLoading) {
+    return <LoadingSpinner message="Loading payment schedule..." />;
   }
 
-  if (leaseError) {
-    return (
-      <ErrorView
-        title="Unable to Load Lease Information"
-        message={leaseError}
-        onRetry={() => fetchSchedule()}
-      />
-    );
-  }
-
-  if (!actualLeaseId) {
+  if (!selectedLeaseId && !isLoading) {
     return (
       <ErrorView
         title="No Active Lease Found"
@@ -149,10 +81,8 @@ export default function PaymentScheduleScreen() {
     return (
       <ErrorView
         title="Unable to Load Payment Schedule"
-        message={error}
-        onRetry={() => fetchSchedule()}
-        retryLabel={isRetrying ? 'Retrying...' : 'Try Again'}
-        isRetrying={isRetrying}
+        message={(error as any).message || 'Failed to load payment schedule'}
+        onRetry={() => refetch()}
       >
         <Text className="text-xs text-gray-500 mt-2 text-center">
           Check your internet connection and try again
@@ -167,7 +97,7 @@ export default function PaymentScheduleScreen() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
           }
         >
           <View className="px-4 pt-6 pb-4">

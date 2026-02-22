@@ -1,19 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  ScrollView,
-  Share,
-  Alert
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Modal, TouchableOpacity, ScrollView, Share, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as Sharing from 'expo-sharing';
+import { useQuery } from '@tanstack/react-query';
 import { Card } from './Card';
 import { LoadingSpinner } from './LoadingSpinner';
-import { paymentApi } from '../../lib/api';
-import { PaymentReceipt } from '../../types';
+import { paymentApi, API_BASE_URL } from '../../lib/api';
+import { secureStorage } from '../../lib/storage';
 import { formatUGX } from '../../lib/currency';
+import { File, Paths } from 'expo-file-system';
 
 interface PaymentReceiptModalProps {
   visible: boolean;
@@ -26,26 +21,33 @@ export function PaymentReceiptModal({
   onClose,
   paymentId,
 }: PaymentReceiptModalProps) {
-  const [receipt, setReceipt] = useState<PaymentReceipt | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  useEffect(() => {
-    if (visible && paymentId) {
-      fetchReceipt();
-    }
-  }, [visible, paymentId]);
+  const { data: receipt, isLoading, error, refetch } = useQuery({
+    queryKey: ['payment-receipt', paymentId],
+    queryFn: () => paymentApi.getReceipt(paymentId),
+    enabled: visible && !!paymentId,
+  });
 
-  const fetchReceipt = async () => {
+  const handleDownloadPdf = async () => {
+    setIsDownloading(true);
     try {
-      setIsLoading(true);
-      setError(null);
-      const receiptData = await paymentApi.getReceipt(paymentId);
-      setReceipt(receiptData);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load receipt');
+      const token = await secureStorage.getToken();
+      const result = await File.downloadFileAsync(
+        `${API_BASE_URL}/exports/payments/${paymentId}/my-receipt.pdf`,
+        new File(Paths.cache, `vrt-${Date.now()}-${paymentId.split('-')[0]}.pdf`),
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      await Sharing.shareAsync(result.uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Share Receipt PDF',
+      });
+    } catch (error: any) {
+      console.log({ error })
+      Alert.alert('Error', 'Failed to download receipt PDF');
     } finally {
-      setIsLoading(false);
+      setIsDownloading(false);
     }
   };
 
@@ -111,17 +113,17 @@ Thank you for your payment!
             <LoadingSpinner message="Loading receipt..." />
           )}
 
-          {error && (
+          {!!error && (
             <Card className="items-center py-8">
               <MaterialIcons name="error" size={48} color="#EF4444" />
               <Text className="text-lg font-semibold text-gray-800 mt-4">
                 Unable to Load Receipt
               </Text>
               <Text className="text-gray-600 mt-2 text-center">
-                {error}
+                {(error as any).message || 'Failed to load receipt'}
               </Text>
               <TouchableOpacity
-                onPress={fetchReceipt}
+                onPress={() => refetch()}
                 className="bg-[#524768] px-6 py-3 rounded-md mt-4"
               >
                 <Text className="text-white font-semibold">Retry</Text>
@@ -253,11 +255,14 @@ Thank you for your payment!
           <View className="bg-white px-4 pb-6 pt-4 border-t border-gray-200">
             <View className="flex-row gap-2">
               <TouchableOpacity
-                onPress={handleShare}
+                onPress={handleDownloadPdf}
+                disabled={isDownloading}
                 className="flex-1 bg-[#524768] py-3 rounded-md items-center flex-row justify-center"
               >
-                <MaterialIcons name="share" size={20} color="white" />
-                <Text className="text-white font-semibold">Share Receipt</Text>
+                <MaterialIcons name="file-download" size={20} color="white" />
+                <Text className="text-white font-semibold ml-1">
+                  {isDownloading ? 'Downloading...' : 'Download PDF'}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity

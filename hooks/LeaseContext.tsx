@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { tenantApi } from '../lib/api';
 import { LeaseApiResponse } from '../types';
 import { secureStorage } from '../lib/storage';
@@ -17,57 +18,41 @@ const LeaseContext = createContext<LeaseContextType | undefined>(undefined);
 
 export function LeaseProvider({ children }: { children: ReactNode }) {
     const { user } = useAuth();
-    const [allLeases, setAllLeases] = useState<LeaseApiResponse[]>([]);
     const [selectedLeaseId, setSelectedLeaseId] = useState<string | null>(null);
-    const [isLoadingLeases, setIsLoadingLeases] = useState(false);
 
-    const fetchLeases = async () => {
-        if (!user) return;
+    const { data: allLeases = [], isLoading: isLoadingLeases, refetch } = useQuery({
+        queryKey: ['all-leases'],
+        queryFn: tenantApi.getAllLeases,
+        enabled: !!user,
+    });
 
-        try {
-            setIsLoadingLeases(true);
-            const leases = await tenantApi.getAllLeases();
-            setAllLeases(leases);
+    // Select a lease when the list loads or changes
+    useEffect(() => {
+        if (!user || allLeases.length === 0) return;
 
-            // Try to load stored lease ID first
-            const storedLeaseId = await secureStorage.getLeaseId();
+        (async () => {
+            const storedId = await secureStorage.getLeaseId();
+            let toSelect = selectedLeaseId;
 
-            // Determine which ID to use
-            let leaseToSelectId = selectedLeaseId;
-
-            // If stored ID is valid and exists in our list, prefer it
-            if (storedLeaseId && leases.some(l => l.id === storedLeaseId)) {
-                leaseToSelectId = storedLeaseId;
-            }
-            // If we have leases but no selection (and no valid stored selection), pick default
-            else if (leases.length > 0 && !leaseToSelectId) {
-                // Try to find the first active lease, otherwise fallback to the first one
-                const activeLease = leases.find(l => l.status === 'active');
-                const defaultLease = activeLease || leases[0];
-                leaseToSelectId = defaultLease.id;
+            if (storedId && allLeases.some(l => l.id === storedId)) {
+                toSelect = storedId;
+            } else if (!toSelect) {
+                const active = allLeases.find(l => l.status === 'active');
+                toSelect = (active || allLeases[0]).id;
             }
 
-            if (leaseToSelectId) {
-                setSelectedLeaseId(leaseToSelectId);
-                // Ensure the selection is persisted
-                if (leaseToSelectId !== storedLeaseId) {
-                    await secureStorage.setLeaseId(leaseToSelectId);
+            if (toSelect) {
+                setSelectedLeaseId(toSelect);
+                if (toSelect !== storedId) {
+                    await secureStorage.setLeaseId(toSelect);
                 }
             }
-        } catch (error) {
-            console.error('Failed to fetch leases:', error);
-        } finally {
-            setIsLoadingLeases(false);
-        }
-    };
+        })();
+    }, [allLeases, user]);
 
+    // Clear selection on logout
     useEffect(() => {
-        if (user) {
-            fetchLeases();
-        } else {
-            setAllLeases([]);
-            setSelectedLeaseId(null);
-        }
+        if (!user) setSelectedLeaseId(null);
     }, [user]);
 
     const switchLease = async (leaseId: string) => {
@@ -84,7 +69,7 @@ export function LeaseProvider({ children }: { children: ReactNode }) {
             selectedLease,
             isLoadingLeases,
             switchLease,
-            refreshLeases: fetchLeases
+            refreshLeases: async () => { await refetch(); },
         }}>
             {children}
         </LeaseContext.Provider>

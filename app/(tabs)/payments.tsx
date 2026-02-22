@@ -1,21 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ScrollView, View, Text, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card } from '../../components/ui/Card';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { PaymentModal } from '../../components/ui/PaymentModal';
 import { PaymentConfirmationModal } from '../../components/ui/PaymentConfirmationModal';
 import { PaymentStatusTracker } from '../../components/ui/PaymentStatusTracker';
 import { useAuth } from '../../hooks/useAuth';
-import { useTenantLease } from '../../hooks/useTenantLease';
-import { useRetry } from '../../hooks/useRetry';
+import { useLease } from '../../hooks/LeaseContext';
 import { paymentApi } from '../../lib/api';
 import { ErrorView } from '../../components/ui/ErrorView';
 import {
-  PaymentBalance,
-  PaymentWithDetails,
   PaymentInitiationResponse,
   PaymentStatusResponse,
   PaymentFlowState,
@@ -30,15 +28,7 @@ import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
 export default function PaymentsScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { leaseId, tenantData, isLoading: isLeaseLoading, error: leaseError } = useTenantLease();
-  const { execute: executeWithRetry, isRetrying } = useRetry<any>({ maxAttempts: 3, retryDelay: 1000 });
-
-  // Data states
-  const [balance, setBalance] = useState<PaymentBalance | null>(null);
-  const [payments, setPayments] = useState<PaymentWithDetails[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { selectedLeaseId } = useLease();
 
   // Payment flow states
   const [paymentFlow, setPaymentFlow] = useState<PaymentFlowState>({
@@ -46,91 +36,83 @@ export default function PaymentsScreen() {
   });
   const [currentPayment, setCurrentPayment] = useState<PaymentInitiationResponse | null>(null);
 
-  // Get actual lease ID from tenant data
-  const actualLeaseId = leaseId;
+  const {
+    data: balance,
+    isLoading: isBalanceLoading,
+    isRefetching: isBalanceRefetching,
+    error: balanceError,
+    refetch: refetchBalance,
+  } = useQuery({
+    queryKey: ['payment-balance', selectedLeaseId],
+    queryFn: () => paymentApi.getBalance(selectedLeaseId!),
+    enabled: !!selectedLeaseId,
+  });
 
-  const fetchPaymentData = useCallback(async (showLoading = true) => {
-    try {
-      if (showLoading) setIsLoading(true);
-      setError(null);
+  const {
+    data: payments = [],
+    isRefetching: isPaymentsRefetching,
+    refetch: refetchPayments,
+  } = useQuery({
+    queryKey: ['payment-history', selectedLeaseId],
+    queryFn: () => paymentApi.getHistory(selectedLeaseId!),
+    enabled: !!selectedLeaseId,
+  });
 
-      // Check if we have a valid lease ID
-      if (!actualLeaseId) {
-        throw new Error('No active lease found. Please contact your landlord.');
-      }
-
-      // Fetch balance and payment history with retry mechanism
-      const result = await executeWithRetry(async () => {
-        const [balanceData, paymentsData] = await Promise.all([
-          paymentApi.getBalance(actualLeaseId),
-          paymentApi.getHistory(actualLeaseId),
-        ]);
-        return { balanceData, paymentsData };
-      });
-
-      setBalance(result.balanceData);
-      setPayments(result.paymentsData);
-    } catch (err: any) {
-      console.error('Failed to fetch payment data:', err);
-
-      // Provide more user-friendly error messages
-      let errorMessage = 'Failed to load payment information';
-
-      if (err.message.includes('Network Error') || err.message.includes('connection')) {
-        errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
-      } else if (err.message.includes('timeout')) {
-        errorMessage = 'Request timed out. Please check your connection and try again.';
-      } else if (err.message.includes('401') || err.message.includes('unauthorized')) {
-        errorMessage = 'Session expired. Please log in again.';
-      } else if (err.message.includes('403') || err.message.includes('forbidden')) {
-        errorMessage = 'Access denied. Please contact support.';
-      } else if (err.message.includes('404')) {
-        errorMessage = 'Payment information not found. Please contact support.';
-      } else if (err.message.includes('500')) {
-        errorMessage = 'Server error. Please try again in a few moments.';
+  const initiatePaymentMutation = useMutation({
+    mutationFn: paymentApi.initiate,
+    onSuccess: (paymentResponse) => {
+      setCurrentPayment(paymentResponse);
+      setPaymentFlow(prev => ({
+        ...prev,
+        transactionId: paymentResponse.transactionId,
+        step: 'processing',
+        isLoading: false,
+        error: undefined,
+      }));
+    },
+    onError: (err: any) => {
+      let errorMessage = 'Payment failed. Please try again.';
+      if (err.message?.includes('Network Error') || err.message?.includes('connection')) {
+        errorMessage = 'Connection failed. Please check your internet and try again.';
+      } else if (err.message?.includes('timeout')) {
+        errorMessage = 'Request timed out. Please try again.';
+      } else if (err.message?.includes('Invalid payment data')) {
+        errorMessage = 'Invalid payment information. Please check your details.';
+      } else if (err.message?.includes('Insufficient funds')) {
+        errorMessage = 'Insufficient funds in your mobile money account.';
+      } else if (err.message?.includes('Phone number')) {
+        errorMessage = 'Invalid phone number. Please check your mobile money number.';
       } else if (err.message) {
         errorMessage = err.message;
       }
+      setPaymentFlow(prev => ({ ...prev, error: errorMessage, isLoading: false }));
+    },
+  });
 
-      setError(errorMessage);
-    } finally {
-      if (showLoading) setIsLoading(false);
-    }
-  }, [actualLeaseId, executeWithRetry]);
+  const isRefreshing = isBalanceRefetching || isPaymentsRefetching;
 
   const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    await fetchPaymentData(false);
-    setIsRefreshing(false);
-  }, [fetchPaymentData]);
-
-  // Fetch data when lease ID becomes available
-  useEffect(() => {
-    if (actualLeaseId) {
-      fetchPaymentData();
+    if (selectedLeaseId) {
+      await Promise.all([refetchBalance(), refetchPayments()]);
     }
-  }, [actualLeaseId, fetchPaymentData]);
+  }, [selectedLeaseId, refetchBalance, refetchPayments]);
 
   useFocusEffect(
     useCallback(() => {
-      // Refresh when screen comes into focus and we have a lease ID
-      if (actualLeaseId) {
-        fetchPaymentData(false);
+      if (selectedLeaseId) {
+        refetchBalance();
+        refetchPayments();
       }
-    }, [actualLeaseId, fetchPaymentData])
+    }, [selectedLeaseId])
   );
 
   const handlePayNow = useCallback(() => {
     if (!balance) return;
-
-    setPaymentFlow({
-      step: 'amount-selection',
-      isLoading: false,
-    });
+    setPaymentFlow({ step: 'amount-selection', isLoading: false });
   }, [balance]);
 
   const handleAmountConfirm = useCallback(async (amount: number) => {
-    if (!balance || !actualLeaseId) {
+    if (!balance || !selectedLeaseId) {
       Alert.alert('Error', 'Payment information not available. Please try again.');
       return;
     }
@@ -138,8 +120,7 @@ export default function PaymentsScreen() {
     try {
       setPaymentFlow(prev => ({ ...prev, amount, isLoading: true, error: undefined }));
 
-      // Use tenant phone number from the lease data or user profile
-      const phoneNumber = tenantData?.tenant?.phone || user?.phone;
+      const phoneNumber = user?.phone;
 
       if (!phoneNumber) {
         throw new Error('Phone number not found. Please update your profile.');
@@ -169,31 +150,24 @@ export default function PaymentsScreen() {
         isLoading: false,
         error: undefined,
       }));
-
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to proceed with payment');
       setPaymentFlow(prev => ({ ...prev, isLoading: false, error: err.message }));
     }
-  }, [balance, tenantData?.tenant?.phone, user?.phone, actualLeaseId]);
+  }, [balance, user?.phone, selectedLeaseId]);
 
   const handlePaymentConfirm = useCallback(async (confirmedPhoneNumber?: string) => {
-    // Get current payment flow state
     const { amount, phoneNumber, paymentMethod } = paymentFlow;
-
-    // Use the confirmed phone number if provided, otherwise use the one from state
     const effectivePhoneNumber = confirmedPhoneNumber || phoneNumber;
 
-    if (!balance || !amount || !effectivePhoneNumber || !actualLeaseId) {
+    if (!balance || !amount || !effectivePhoneNumber || !selectedLeaseId) {
       Alert.alert('Error', 'Missing payment information. Please try again.');
       return;
     }
 
-    // Create effective provider ID based on the phone number being used
-    // This is important because user might have changed the number in the modal
     let effectiveProviderId = paymentMethod?.id;
 
     if (confirmedPhoneNumber) {
-      // Re-evaluate provider if phone number changed
       const newProvider = getMobileMoneyProvider(confirmedPhoneNumber);
       if (newProvider === 'unknown') {
         Alert.alert('Error', 'Invalid phone number. Please use a valid MTN or Airtel number.');
@@ -207,58 +181,16 @@ export default function PaymentsScreen() {
       return;
     }
 
-    try {
-      // Set loading state
-      setPaymentFlow(prev => ({ ...prev, isLoading: true, error: undefined }));
+    setPaymentFlow(prev => ({ ...prev, isLoading: true, error: undefined }));
 
-      // Initiate payment with retry mechanism
-      const paymentResponse = await executeWithRetry(async () => {
-        return await paymentApi.initiate({
-          leaseId: actualLeaseId,
-          amount,
-          phoneNumber: effectivePhoneNumber,
-          provider: effectiveProviderId as 'mtn' | 'airtel' | 'm-sente',
-          paymentMethod: 'mobile_money',
-        });
-      });
-
-      // Update state with payment response
-      setCurrentPayment(paymentResponse);
-      setPaymentFlow(prev => ({
-        ...prev,
-        transactionId: paymentResponse.transactionId,
-        step: 'processing',
-        isLoading: false,
-        error: undefined,
-      }));
-
-    } catch (err: any) {
-      console.error('Payment initiation failed:', err);
-
-      // Provide user-friendly error messages
-      let errorMessage = 'Payment failed. Please try again.';
-
-      if (err.message.includes('Network Error') || err.message.includes('connection')) {
-        errorMessage = 'Connection failed. Please check your internet and try again.';
-      } else if (err.message.includes('timeout')) {
-        errorMessage = 'Request timed out. Please try again.';
-      } else if (err.message.includes('Invalid payment data')) {
-        errorMessage = 'Invalid payment information. Please check your details.';
-      } else if (err.message.includes('Insufficient funds')) {
-        errorMessage = 'Insufficient funds in your mobile money account.';
-      } else if (err.message.includes('Phone number')) {
-        errorMessage = 'Invalid phone number. Please check your mobile money number.';
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-
-      setPaymentFlow(prev => ({
-        ...prev,
-        error: errorMessage,
-        isLoading: false
-      }));
-    }
-  }, [balance, paymentFlow, actualLeaseId]);
+    initiatePaymentMutation.mutate({
+      leaseId: selectedLeaseId,
+      amount,
+      phoneNumber: effectivePhoneNumber,
+      provider: effectiveProviderId as 'mtn' | 'airtel' | 'm-sente',
+      paymentMethod: 'mobile_money',
+    });
+  }, [balance, paymentFlow, selectedLeaseId, initiatePaymentMutation]);
 
   const handlePaymentSuccess = useCallback((status: PaymentStatusResponse) => {
     setPaymentFlow(prev => ({
@@ -267,11 +199,11 @@ export default function PaymentsScreen() {
       error: undefined,
       isLoading: false
     }));
-    // Refresh payment data to show updated balance
     setTimeout(() => {
-      fetchPaymentData(false);
+      refetchBalance();
+      refetchPayments();
     }, 1000);
-  }, [fetchPaymentData]);
+  }, [refetchBalance, refetchPayments]);
 
   const handlePaymentFailed = useCallback((status: PaymentStatusResponse) => {
     setPaymentFlow(prev => ({
@@ -292,39 +224,20 @@ export default function PaymentsScreen() {
   }, []);
 
   const closePaymentFlow = useCallback(() => {
-    setPaymentFlow({
-      step: 'idle',
-      isLoading: false,
-      error: undefined
-    });
+    setPaymentFlow({ step: 'idle', isLoading: false, error: undefined });
     setCurrentPayment(null);
   }, []);
 
   const retryPayment = useCallback(() => {
-    setPaymentFlow({
-      step: 'amount-selection',
-      isLoading: false,
-      error: undefined
-    });
+    setPaymentFlow({ step: 'amount-selection', isLoading: false, error: undefined });
     setCurrentPayment(null);
   }, []);
 
-  if (isLeaseLoading || isLoading) {
-    const message = isRetrying ? "Retrying connection..." : "Loading payment information...";
-    return <LoadingSpinner message={message} />;
+  if (isBalanceLoading) {
+    return <LoadingSpinner message="Loading payment information..." />;
   }
 
-  if (leaseError) {
-    return (
-      <ErrorView
-        title="Unable to Load Lease Information"
-        message={leaseError}
-        onRetry={() => fetchPaymentData()}
-      />
-    );
-  }
-
-  if (!actualLeaseId) {
+  if (!selectedLeaseId) {
     return (
       <ErrorView
         title="No Active Lease Found"
@@ -335,14 +248,12 @@ export default function PaymentsScreen() {
     );
   }
 
-  if (error && !balance) {
+  if (balanceError && !balance) {
     return (
       <ErrorView
         title="Unable to Load Payments"
-        message={error}
-        onRetry={() => fetchPaymentData()}
-        retryLabel={isRetrying ? 'Retrying...' : 'Try Again'}
-        isRetrying={isRetrying}
+        message={(balanceError as any).message || 'Failed to load payment information'}
+        onRetry={() => refetchBalance()}
       >
         <Text className="text-xs text-gray-500 mt-2 text-center">
           Check your internet connection and try again
@@ -581,7 +492,7 @@ export default function PaymentsScreen() {
           />
         )}
 
-        {/* Payment Confirmation Modal (Replaces PIN Entry) */}
+        {/* Payment Confirmation Modal */}
         {paymentFlow.paymentMethod && paymentFlow.phoneNumber && (
           <PaymentConfirmationModal
             visible={paymentFlow.step === 'confirmation'}

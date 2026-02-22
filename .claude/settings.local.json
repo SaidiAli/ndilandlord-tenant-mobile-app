@@ -4,7 +4,9 @@
       "Bash(npm run db:generate:*)",
       "Bash(npm run db:setup:*)",
       "Bash(npx tsc:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(cd /c/Users/user/Desktop/code/verit/verit-tenant-mobile-app && npx expo install expo-file-system expo-sharing 2>&1)",
+      "Bash(cd:*)"
     ],
     "deny": [],
     "ask": []

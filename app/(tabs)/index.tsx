@@ -1,7 +1,8 @@
 import { ScrollView, View, Text, TouchableOpacity, RefreshControl } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { useLease } from '../../hooks/LeaseContext';
@@ -12,53 +13,22 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { ErrorView } from '../../components/ui/ErrorView';
 import { formatUGX } from '../../lib/currency';
 import { tenantApi } from '../../lib/api';
-import { TenantDashboardData } from '../../types';
 
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
 
 export default function DashboardScreen() {
   const { user } = useAuth();
-  const { selectedLeaseId, selectedLease } = useLease();
+  const { selectedLeaseId } = useLease();
 
-  // State for dashboard data
-  const [dashboardData, setDashboardData] = useState<TenantDashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchDashboardData = async (showLoading = true) => {
-    try {
-      if (showLoading) setIsLoading(true);
-      setError(null);
-
-      // Fetch comprehensive dashboard data from backend
-      // If we have a selected lease, pass its ID
-      const data = await tenantApi.getDashboard(selectedLeaseId || undefined);
-      setDashboardData(data);
-    } catch (err: any) {
-      console.error('Failed to fetch dashboard data:', err);
-      setError(err.message || 'Failed to load dashboard data');
-    } finally {
-      if (showLoading) setIsLoading(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await fetchDashboardData(false);
-    setIsRefreshing(false);
-  };
-
-  // Fetch data on component mount and focus
-  useEffect(() => {
-    fetchDashboardData();
-  }, [selectedLeaseId]);
+  const { data: dashboardData, isLoading, isRefetching, error, refetch } = useQuery({
+    queryKey: ['tenant-dashboard', selectedLeaseId],
+    queryFn: () => tenantApi.getDashboard(selectedLeaseId || undefined),
+  });
 
   useFocusEffect(
     useCallback(() => {
-      // Refresh when screen comes into focus
-      fetchDashboardData(false);
-    }, [])
+      refetch();
+    }, [refetch])
   );
 
   if (!user) {
@@ -73,8 +43,8 @@ export default function DashboardScreen() {
     return (
       <ErrorView
         title="Unable to Load Dashboard"
-        message={error}
-        onRetry={() => fetchDashboardData()}
+        message={(error as any).message || 'Failed to load dashboard data'}
+        onRetry={() => refetch()}
       />
     );
   }
@@ -85,7 +55,7 @@ export default function DashboardScreen() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
           }
         >
           <View className="px-4 pt-6 pb-4">

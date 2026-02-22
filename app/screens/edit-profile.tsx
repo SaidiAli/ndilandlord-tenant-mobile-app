@@ -2,6 +2,7 @@ import { ScrollView, View, Text, TouchableOpacity, TextInput, Alert } from 'reac
 import { MaterialIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
@@ -17,8 +18,13 @@ export default function EditProfileScreen() {
     phone: user?.phone || '',
   });
 
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const { mutate: saveProfile, isPending } = useMutation({
+    mutationFn: (data: typeof formData) => updateUser(data),
+    onSuccess: () => Alert.alert('Success', 'Profile updated successfully', [{ text: 'OK', onPress: () => router.back() }]),
+    onError: (err: any) => Alert.alert('Error', err.message || 'Failed to update profile'),
+  });
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -45,23 +51,9 @@ export default function EditProfileScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await updateUser(formData);
-
-      Alert.alert('Success', 'Profile updated successfully', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update profile');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSave = () => {
+    if (!validateForm()) return;
+    saveProfile(formData);
   };
 
   const handleCancel = () => {
@@ -217,12 +209,12 @@ export default function EditProfileScreen() {
             <View className="gap-2 mt-6">
               <TouchableOpacity
                 onPress={handleSave}
-                disabled={isLoading}
-                className={`py-4 rounded-md ${isLoading ? 'bg-gray-300' : 'bg-[#524768]'
+                disabled={isPending}
+                className={`py-4 rounded-md ${isPending ? 'bg-gray-300' : 'bg-[#524768]'
                   }`}
               >
                 <Text className="text-white font-semibold text-center text-lg">
-                  {isLoading ? 'Saving Changes...' : 'Save Changes'}
+                  {isPending ? 'Saving Changes...' : 'Save Changes'}
                 </Text>
               </TouchableOpacity>
 

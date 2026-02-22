@@ -2,6 +2,7 @@ import { ScrollView, View, Text, TouchableOpacity, TextInput, Alert } from 'reac
 import { MaterialIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
@@ -22,8 +23,23 @@ export default function ChangePasswordScreen() {
     confirm: false,
   });
 
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const { mutate: submitChange, isPending } = useMutation({
+    mutationFn: () => changePassword({
+      currentPassword: formData.currentPassword,
+      newPassword: formData.newPassword,
+    }),
+    onSuccess: () => {
+      Alert.alert(
+        'Success',
+        'Password changed successfully.',
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
+      setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    },
+    onError: (err: any) => Alert.alert('Error', err.message || 'Failed to change password'),
+  });
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -53,35 +69,9 @@ export default function ChangePasswordScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChangePassword = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await changePassword({
-        currentPassword: formData.currentPassword,
-        newPassword: formData.newPassword,
-      });
-
-      Alert.alert(
-        'Success',
-        'Password changed successfully.',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-
-      // Clear form
-      setFormData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      });
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to change password');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleChangePassword = () => {
+    if (!validateForm()) return;
+    submitChange();
   };
 
   const handleCancel = () => {
@@ -296,12 +286,12 @@ export default function ChangePasswordScreen() {
             <View className="gap-2">
               <TouchableOpacity
                 onPress={handleChangePassword}
-                disabled={isLoading}
-                className={`py-4 rounded-md ${isLoading ? 'bg-gray-300' : 'bg-[#524768]'
+                disabled={isPending}
+                className={`py-4 rounded-md ${isPending ? 'bg-gray-300' : 'bg-[#524768]'
                   }`}
               >
                 <Text className="text-white font-semibold text-center text-lg">
-                  {isLoading ? 'Changing Password...' : 'Change Password'}
+                  {isPending ? 'Changing Password...' : 'Change Password'}
                 </Text>
               </TouchableOpacity>
 

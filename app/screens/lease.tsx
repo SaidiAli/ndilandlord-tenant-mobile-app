@@ -1,17 +1,21 @@
+import { useState } from 'react';
 import { ScrollView, View, Text, TouchableOpacity, Linking, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as Sharing from 'expo-sharing';
 import { Card } from '../../components/ui/Card';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { useQuery } from '@tanstack/react-query';
-import { tenantApi } from '../../lib/api';
-import { TenantDashboardData } from '../../types';
+import { tenantApi, API_BASE_URL } from '../../lib/api';
+import { secureStorage } from '../../lib/storage';
 import { useLease } from '../../hooks/LeaseContext';
 import { LeaseSwitcher } from '../../components/ui/LeaseSwitcher';
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
+import { File, Paths } from 'expo-file-system';
 
 export default function LeaseScreen() {
   const { selectedLeaseId } = useLease();
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Fetch detailed lease information via dashboard API
   const { data: dashboardData, isLoading, error } = useQuery({
@@ -31,6 +35,28 @@ export default function LeaseScreen() {
       }
     } catch {
       Alert.alert('Error', 'Failed to initiate phone call');
+    }
+  };
+
+  const handleDownloadStatement = async () => {
+    if (!selectedLeaseId) return;
+    setIsDownloading(true);
+    try {
+      const token = await secureStorage.getToken();
+      const result = await File.downloadFileAsync(
+        `${API_BASE_URL}/exports/leases/${selectedLeaseId}/my-statement.pdf`,
+        new File(Paths.cache, `vrt-${Date.now()}-${selectedLeaseId.split('-')[0]}.pdf`),
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      await Sharing.shareAsync(result.uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Share Lease Statement',
+      });
+    } catch {
+      Alert.alert('Error', 'Failed to download statement');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -285,11 +311,11 @@ export default function LeaseScreen() {
                         onPress={() => handleCallLandlord(landlord.phone!)}
                       >
                         <Text className="text-gray-600">Phone:</Text>
-                        <View className="flex-row items-center space-x-2">
+                        <View className="flex-row items-center gap-2">
+                          <MaterialIcons name="phone" size={16} color="#524768" />
                           <Text className="font-medium text-[#524768]">
                             {landlord.phone}
                           </Text>
-                          <MaterialIcons name="phone" size={16} color="#524768" />
                         </View>
                       </TouchableOpacity>
                     )}
@@ -300,19 +326,25 @@ export default function LeaseScreen() {
 
             {/* Documents */}
             <Card className="mb-6">
-              <View className="space-y-3">
+              <View className="">
                 <Text className="text-lg font-semibold text-gray-800">
                   Lease Documents
                 </Text>
 
-                <View className="bg-yellow-50 p-3 rounded-md">
-                  <View className="flex-row items-center space-x-2">
-                    <MaterialIcons name="info" size={20} color="#D97706" />
-                    <Text className="text-yellow-700 text-sm font-medium flex-1">
-                      Document management is coming soon. Contact your landlord for lease documents.
-                    </Text>
-                  </View>
-                </View>
+                <Text className="text-gray-600 text-sm">
+                  Download your full payment statement as a PDF.
+                </Text>
+
+                <TouchableOpacity
+                  onPress={handleDownloadStatement}
+                  disabled={isDownloading}
+                  className="bg-[#524768] py-3 mt-4 rounded-md items-center flex-row justify-center"
+                >
+                  <MaterialIcons name="file-download" size={20} color="white" />
+                  <Text className="text-white font-semibold ml-2">
+                    {isDownloading ? 'Downloading...' : 'Download Statement'}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </Card>
           </View>

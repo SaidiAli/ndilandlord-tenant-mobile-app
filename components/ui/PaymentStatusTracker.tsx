@@ -26,7 +26,7 @@ export function PaymentStatusTracker({
 }: PaymentStatusTrackerProps) {
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const [elapsed, setElapsed] = React.useState(0);
-  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { status, isPolling, error, startPolling, stopPolling } = usePaymentStatus({
     transactionId,
