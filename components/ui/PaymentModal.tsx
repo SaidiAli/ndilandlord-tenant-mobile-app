@@ -1,26 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  TextInput,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView
-} from 'react-native';
+import {View,Text,Modal,TouchableOpacity,TextInput,KeyboardAvoidingView,Platform,ScrollView} from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Card } from './Card';
 import { LoadingSpinner } from './LoadingSpinner';
 import { PaymentBalance } from '../../types';
-import {
-  formatUGX,
-  parseUGX,
-  validateUGXAmount,
-  generatePaymentSuggestions,
-  formatNumber
-} from '../../lib/currency';
+import {formatUGX,parseUGX,validateUGXAmount,formatNumber} from '../../lib/currency';
 
 interface PaymentAmountModalProps {
   visible: boolean;
@@ -41,7 +25,6 @@ export function PaymentModal({
   const [selectedSuggestion, setSelectedSuggestion] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const suggestions = generatePaymentSuggestions(balance.outstandingBalance, balance.monthlyRent);
 
   useEffect(() => {
     if (visible) {
@@ -169,56 +152,6 @@ export function PaymentModal({
                     </Text>
                   </View>
                 )}
-              </View>
-            </Card>
-
-            {/* Quick Amount Suggestions */}
-            <Card className="mb-6">
-              <View className="space-y-4">
-                <Text className="text-lg font-semibold text-gray-800">
-                  Quick Amounts
-                </Text>
-
-                <View className="flex-row flex-wrap gap-2">
-                  {suggestions.map((suggestion) => {
-                    const isSelected = selectedSuggestion === suggestion;
-                    const percentage = Math.round((suggestion / balance.outstandingBalance) * 100);
-
-                    return (
-                      <TouchableOpacity
-                        key={suggestion}
-                        onPress={() => handleSuggestionPress(suggestion)}
-                        className={`px-4 py-2 rounded-md border ${isSelected
-                          ? 'bg-[#524768] border-[#524768]'
-                          : 'bg-white border-gray-300'
-                          }`}
-                      >
-                        <Text
-                          className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-gray-700'
-                            }`}
-                        >
-                          {formatUGX(suggestion)}
-                        </Text>
-                        {suggestion < balance.outstandingBalance && (
-                          <Text
-                            className={`text-xs ${isSelected ? 'text-gray-200' : 'text-gray-500'
-                              }`}
-                          >
-                            {percentage}%
-                          </Text>
-                        )}
-                        {suggestion === balance.outstandingBalance && (
-                          <Text
-                            className={`text-xs ${isSelected ? 'text-gray-200' : 'text-gray-500'
-                              }`}
-                          >
-                            Full
-                          </Text>
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
               </View>
             </Card>
           </ScrollView>

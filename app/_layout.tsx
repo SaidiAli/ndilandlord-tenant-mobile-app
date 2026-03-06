@@ -2,8 +2,19 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
+import { Text, TextInput } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
+import {
+  useFonts,
+  NunitoSans_300Light,
+  NunitoSans_400Regular,
+  NunitoSans_400Regular_Italic,
+  NunitoSans_600SemiBold,
+  NunitoSans_700Bold,
+  NunitoSans_800ExtraBold,
+} from '@expo-google-fonts/nunito-sans';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '@/hooks/useAuth';
@@ -13,6 +24,12 @@ import { LeaseProvider } from '@/hooks/LeaseContext';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import '@/global.css';
 import * as Sentry from '@sentry/react-native';
+
+SplashScreen.preventAutoHideAsync();
+
+// Apply Nunito Sans as the default font to all Text and TextInput components
+(Text as any).defaultProps = { ...((Text as any).defaultProps ?? {}), style: [{ fontFamily: 'NunitoSans_400Regular' }, (Text as any).defaultProps?.style] };
+(TextInput as any).defaultProps = { ...((TextInput as any).defaultProps ?? {}), style: [{ fontFamily: 'NunitoSans_400Regular' }, (TextInput as any).defaultProps?.style] };
 
 Sentry.init({
   dsn: 'https://e268093b0b645c3bc79a5f4abd022243@o4510142309203968.ingest.de.sentry.io/4510142310383696',
@@ -28,6 +45,20 @@ export const unstable_settings = {
 
 export default Sentry.wrap(function RootLayout() {
   const colorScheme = useColorScheme();
+  const [fontsLoaded] = useFonts({
+    NunitoSans_300Light,
+    NunitoSans_400Regular,
+    NunitoSans_400Regular_Italic,
+    NunitoSans_600SemiBold,
+    NunitoSans_700Bold,
+    NunitoSans_800ExtraBold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
 
   const [queryClient] = useState(
     () =>

@@ -19,8 +19,8 @@ import {
 
 import * as Sentry from '@sentry/react-native';
 
-// export const API_BASE_URL = 'https://dcgc8okokso0ko88cwwgogo0.aptusagency.com/api';
-export const API_BASE_URL = 'http://192.168.1.3:4000/api';
+export const API_BASE_URL = 'https://dcgc8okokso0ko88cwwgogo0.aptusagency.com/api';
+// export const API_BASE_URL = 'http://192.168.1.5:4000/api';
 
 // Create axios instance
 const api = axios.create({
@@ -132,7 +132,7 @@ export const authApi = {
 
   updateUser: async (userData: UpdateUserRequest): Promise<User> => {
     try {
-      const response = await api.put<ApiResponse<User>>('/auth/profile', userData);
+      const response = await api.put<ApiResponse<User>>('/users/profile', userData);
 
       if (!response.data.success || !response.data.data) {
         throw new Error(response.data.error || 'Failed to update profile');

@@ -297,6 +297,14 @@ export interface PaymentReceipt {
   } | null;
   generatedAt: string;
   dueDate?: string;
+  periodCovered?: string | null;
+  appliedSchedules?: Array<{
+    scheduleId: string;
+    paymentNumber: number;
+    amountApplied: number;
+    scheduledAmount: number;
+    period: string;
+  }> | null;
   companyInfo: {
     name: string;
     address: string;

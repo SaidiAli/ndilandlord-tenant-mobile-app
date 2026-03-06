@@ -15,6 +15,7 @@ import { formatUGX } from '../../lib/currency';
 import { tenantApi } from '../../lib/api';
 
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
+import { formatDateShort } from '@/lib/utils';
 
 export default function DashboardScreen() {
   const { user } = useAuth();
@@ -137,7 +138,7 @@ export default function DashboardScreen() {
                     </View>
                     {dashboardData.payments.nextDueDate && (
                       <Text className="text-gray-600 text-sm">
-                        Next Due: {new Date(dashboardData.payments.nextDueDate).toLocaleDateString()}
+                        Next Due: {formatDateShort(dashboardData.payments.nextDueDate)}
                       </Text>
                     )}
                     {dashboardData.payments.isOverdue && (
@@ -170,7 +171,7 @@ export default function DashboardScreen() {
                       </Text>
                       {dashboardData.payments.nextDueDate && (
                         <Text className="text-gray-600 text-sm">
-                          Due: {new Date(dashboardData.payments.nextDueDate).toLocaleDateString()}
+                          Due: {formatDateShort(dashboardData.payments.nextDueDate)}
                         </Text>
                       )}
                     </View>
@@ -218,8 +219,8 @@ export default function DashboardScreen() {
                               </Text>
                               <Text className="text-gray-600 text-sm">
                                 {payment.paidDate
-                                  ? new Date(payment.paidDate).toLocaleDateString()
-                                  : new Date(payment.createdAt).toLocaleDateString()
+                                  ? formatDateShort(payment.paidDate)
+                                  : formatDateShort(payment.createdAt)
                                 }
                               </Text>
                             </View>

@@ -11,6 +11,7 @@ import { paymentApi } from '../../lib/api';
 import { PaymentScheduleItem } from '../../types';
 import { formatUGX } from '../../lib/currency';
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
+import { formatDateShort } from '@/lib/utils';
 
 type ScheduleStatus = PaymentScheduleItem['status'];
 
@@ -173,7 +174,7 @@ export default function PaymentScheduleScreen() {
                             <View className="flex-row items-center gap-2">
                               <MaterialIcons name="event" size={16} color="#6B7280" />
                               <Text className="text-sm text-gray-600">
-                                Due: {new Date(item.dueDate).toLocaleDateString()}
+                                Due: {formatDateShort(item.dueDate)}
                               </Text>
                             </View>
 
@@ -189,7 +190,7 @@ export default function PaymentScheduleScreen() {
                             <View className="flex-row items-center gap-2">
                               <MaterialIcons name="date-range" size={16} color="#6B7280" />
                               <Text className="text-sm text-gray-600">
-                                Period: {new Date(item.periodStart).toLocaleDateString()} - {new Date(item.periodEnd).toLocaleDateString()}
+                                Period: {formatDateShort(item.periodStart)} - {formatDateShort(item.periodEnd)}
                               </Text>
                             </View>
 

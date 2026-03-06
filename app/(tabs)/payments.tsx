@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, RefreshControl, Alert, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -13,17 +13,10 @@ import { useAuth } from '../../hooks/useAuth';
 import { useLease } from '../../hooks/LeaseContext';
 import { paymentApi } from '../../lib/api';
 import { ErrorView } from '../../components/ui/ErrorView';
-import {
-  PaymentInitiationResponse,
-  PaymentStatusResponse,
-  PaymentFlowState,
-} from '../../types';
-import {
-  formatUGX,
-  normalizePhoneNumber,
-  getMobileMoneyProvider
-} from '../../lib/currency';
+import {PaymentInitiationResponse,PaymentStatusResponse,PaymentFlowState} from '../../types';
+import {formatUGX,normalizePhoneNumber,getMobileMoneyProvider} from '../../lib/currency';
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
+import { formatDateShort } from '@/lib/utils';
 
 export default function PaymentsScreen() {
   const router = useRouter();
@@ -277,16 +270,14 @@ export default function PaymentsScreen() {
               Payments
             </Text>
 
-            {/* Payment Status Tracker (during processing) */}
-            {paymentFlow.step === 'processing' && currentPayment && (
-              <PaymentStatusTracker
-                transactionId={currentPayment.transactionId}
-                amount={currentPayment.amount}
-                onSuccess={handlePaymentSuccess}
-                onFailed={handlePaymentFailed}
-                onTimeout={handlePaymentTimeout}
-                className="mb-6"
-              />
+            {/* Processing indicator */}
+            {paymentFlow.step === 'processing' && (
+              <Card className="mb-6">
+                <View className="items-center py-8 space-y-4">
+                  <ActivityIndicator size="large" color="#4F46E5" />
+                  <Text className="text-gray-600 text-base font-medium">Processing payment...</Text>
+                </View>
+              </Card>
             )}
 
             {/* Success/Failure Messages */}
@@ -366,7 +357,7 @@ export default function PaymentsScreen() {
                       </Text>
                     </View>
                     <Text className="text-gray-600 text-sm">
-                      Next Due: {new Date(balance.dueDate).toLocaleDateString()}
+                      Next Due: {formatDateShort(balance.dueDate)}
                     </Text>
                     {balance.isOverdue && (
                       <Text className="text-yellow-600 text-sm font-medium">

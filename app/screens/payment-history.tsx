@@ -12,6 +12,7 @@ import { useLease } from '../../hooks/LeaseContext';
 import { paymentApi } from '../../lib/api';
 import { formatUGX } from '../../lib/currency';
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
+import { formatDateShort } from '@/lib/utils';
 
 export default function PaymentHistoryScreen() {
   const { selectedLeaseId } = useLease();
@@ -105,14 +106,14 @@ export default function PaymentHistoryScreen() {
                             <View className="flex-row justify-between items-start">
                               <View className="flex-1 space-y-1">
                                 <Text className="font-medium text-gray-800">
-                                  Rent Payment {payment.dueDate ? `(${new Date(payment.dueDate).toLocaleDateString()})` : ''}
+                                  Rent Payment {payment.dueDate ? `(${formatDateShort(payment.dueDate)})` : ''}
                                 </Text>
                                 <Text className="text-sm text-gray-600">
                                   {payment.periodCovered ? (
                                     <Text>Period: {payment.periodCovered}</Text>
                                   ) : (
                                     payment.dueDate && (
-                                      <Text>Period: {new Date(payment.dueDate).toLocaleDateString()}</Text>
+                                      <Text>Period: {formatDateShort(payment.dueDate)}</Text>
                                     )
                                   )}
                                 </Text>
@@ -120,7 +121,7 @@ export default function PaymentHistoryScreen() {
                                   {payment.paidDate && (
                                     <Text>
                                       {'Paid: '}
-                                      {new Date(payment.paidDate).toLocaleDateString()}
+                                      {formatDateShort(payment.paidDate)}
                                     </Text>
                                   )}
                                 </Text>

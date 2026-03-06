@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,8 +8,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert
+  Alert,
+  BackHandler,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,6 +30,14 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
+
+  // Prevent the Android hardware back button from navigating away from login
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = BackHandler.addEventListener('hardwareBackPress', () => true);
+      return () => subscription.remove();
+    }, [])
+  );
 
   const {
     control,

@@ -9,6 +9,7 @@ import { paymentApi, API_BASE_URL } from '../../lib/api';
 import { secureStorage } from '../../lib/storage';
 import { formatUGX } from '../../lib/currency';
 import { File, Paths } from 'expo-file-system';
+import { formatDateShort, formatSchedulePeriod } from '@/lib/utils';
 
 interface PaymentReceiptModalProps {
   visible: boolean;
@@ -60,13 +61,14 @@ Verit - Payment Receipt
 Receipt #: ${receipt.receiptNumber}
 Amount: ${formatUGX(receipt.amount)}
 Payment Method: ${receipt.paymentMethod}
-Date: ${new Date(receipt.paidDate).toLocaleDateString()}
+Periods: ${receipt.appliedSchedules?.length ? receipt.appliedSchedules.map(s => `#${s.paymentNumber} ${formatSchedulePeriod(s.period)}`).join(', ') : receipt.periodCovered || (receipt.dueDate ? formatDateShort(receipt.dueDate) : 'N/A')}
+Date: ${formatDateShort(receipt.paidDate)}
 Transaction ID: ${receipt.transactionId}
 
 Tenant: ${receipt.tenant?.name}
 Phone: ${receipt.tenant?.phone}
 
-Generated: ${new Date(receipt.generatedAt).toLocaleString()}
+Generated: ${formatDateShort(receipt.generatedAt)}
 
 Thank you for your payment!
     `.trim();
@@ -170,19 +172,38 @@ Thank you for your payment!
                       </Text>
                     </View>
 
-                    {receipt.dueDate && (
+                    {receipt.appliedSchedules && receipt.appliedSchedules.length > 0 ? (
+                      <View className="space-y-2">
+                        <Text className="text-gray-600">Periods Cleared:</Text>
+                        {receipt.appliedSchedules.map((schedule, index) => (
+                          <View key={index} className="bg-gray-50 p-3 rounded-md flex-row justify-between items-center">
+                            <View>
+                              <Text className="font-medium text-gray-800">Payment #{schedule.paymentNumber}</Text>
+                              <Text className="text-sm text-gray-500">{formatSchedulePeriod(schedule.period)}</Text>
+                            </View>
+                            <View className="items-end">
+                              <Text className="font-medium text-gray-800">{formatUGX(schedule.amountApplied)}</Text>
+                              <Text className="text-xs text-gray-500">of {formatUGX(schedule.scheduledAmount)}</Text>
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    ) : receipt.periodCovered ? (
+                      <View className="flex-row justify-between">
+                        <Text className="text-gray-600">Period Covered:</Text>
+                        <Text className="font-medium text-gray-800">{receipt.periodCovered}</Text>
+                      </View>
+                    ) : receipt.dueDate ? (
                       <View className="flex-row justify-between">
                         <Text className="text-gray-600">Payment Period:</Text>
-                        <Text className="font-medium text-gray-800">
-                          {new Date(receipt.dueDate).toLocaleDateString()}
-                        </Text>
+                        <Text className="font-medium text-gray-800">{formatDateShort(receipt.dueDate)}</Text>
                       </View>
-                    )}
+                    ) : null}
 
                     <View className="flex-row justify-between">
                       <Text className="text-gray-600">Payment Date:</Text>
                       <Text className="font-medium text-gray-800">
-                        {new Date(receipt.paidDate).toLocaleDateString()}
+                        {formatDateShort(receipt.paidDate)}
                       </Text>
                     </View>
                   </View>
@@ -228,7 +249,7 @@ Thank you for your payment!
                         <View className="flex-row justify-between">
                           <Text className="text-gray-600">Lease Period:</Text>
                           <Text className="text-gray-800">
-                            {new Date(receipt.lease.startDate).toLocaleDateString()} - {receipt.lease.endDate ? new Date(receipt.lease.endDate).toLocaleDateString() : 'Ongoing'}
+                            {formatDateShort(receipt.lease.startDate)} - {receipt.lease.endDate ? formatDateShort(receipt.lease.endDate) : 'Ongoing'}
                           </Text>
                         </View>
                       </View>
@@ -238,7 +259,7 @@ Thank you for your payment!
                   {/* Footer */}
                   <View className="items-center pt-4 border-t border-gray-200">
                     <Text className="text-xs text-gray-500 text-center">
-                      Generated on {new Date(receipt.generatedAt).toLocaleString()}
+                      Generated on {formatDateShort(receipt.generatedAt)}
                     </Text>
                     <Text className="text-xs text-gray-500 text-center mt-1">
                       Thank you for your payment!

@@ -95,7 +95,7 @@ export function PaymentConfirmationModal({
                                     <MaterialIcons name="phone-android" size={32} color="white" />
                                 </View>
 
-                                <View className="items-center space-y-2 w-full">
+                                <View className="items-center gap-2 w-full">
                                     <Text className="text-xl font-bold text-gray-800">
                                         {formatUGX(amount)}
                                     </Text>
@@ -104,28 +104,33 @@ export function PaymentConfirmationModal({
                                     </Text>
 
                                     {isEditing ? (
-                                        <View className="flex-row items-center space-x-2 w-full max-w-[200px]">
+                                        <View className="flex-row items-center bg-gray-100 rounded-full px-3 py-1 border border-gray-300 w-full max-w-[240px]">
                                             <TextInput
                                                 value={currentPhoneNumber}
                                                 onChangeText={handlePhoneChange}
                                                 keyboardType="phone-pad"
-                                                className="flex-1 border-b border-gray-300 text-center text-lg font-semibold py-1"
+                                                className="flex-1 text-center text-lg font-semibold text-gray-900"
                                                 autoFocus
                                                 onBlur={() => setIsEditing(false)}
                                             />
-                                            <TouchableOpacity onPress={() => setIsEditing(false)}>
-                                                <MaterialIcons name="check" size={24} color="#10B981" />
+                                            <TouchableOpacity
+                                                onPress={() => setIsEditing(false)}
+                                                className="ml-1 w-7 h-7 rounded-full bg-emerald-500 items-center justify-center"
+                                            >
+                                                <MaterialIcons name="check" size={16} color="white" />
                                             </TouchableOpacity>
                                         </View>
                                     ) : (
                                         <TouchableOpacity
                                             onPress={() => setIsEditing(true)}
-                                            className="flex-row items-center space-x-2 bg-gray-100 px-3 py-1 rounded-full"
+                                            className="flex-row items-center gap-2 bg-gray-100 border border-dashed border-gray-400 px-4 py-2 rounded-full"
                                         >
                                             <Text className="text-gray-900 font-semibold text-lg">
                                                 {formatPhoneNumber(currentPhoneNumber)}
                                             </Text>
-                                            <MaterialIcons name="edit" size={16} color="#6B7280" />
+                                            <View className="w-5 h-5 rounded-full bg-gray-400 items-center justify-center">
+                                                <MaterialIcons name="edit" size={12} color="white" />
+                                            </View>
                                         </TouchableOpacity>
                                     )}
                                 </View>

@@ -90,38 +90,6 @@ export function validateUGXAmount(
 }
 
 /**
- * Generate suggested payment amounts based on outstanding balance
- */
-export function generatePaymentSuggestions(
-  outstandingBalance: number,
-  monthlyRent: number
-): number[] {
-  const suggestions: number[] = [];
-
-  // If monthly rent is invalid or zero, just return outstanding balance
-  if (!monthlyRent || monthlyRent <= 0) {
-    return [outstandingBalance];
-  }
-
-  // Add multiples of monthly rent (1x, 2x, 3x) that are less than outstanding balance
-  // We limit to 3 multiples to keep the list concise
-  for (let multiplier = 1; multiplier <= 3; multiplier++) {
-    const amount = monthlyRent * multiplier;
-    if (amount < outstandingBalance) {
-      suggestions.push(amount);
-    } else {
-      break;
-    }
-  }
-
-  // Always include the full outstanding balance
-  suggestions.push(outstandingBalance);
-
-  // Remove duplicates and sort
-  return [...new Set(suggestions)].sort((a, b) => a - b);
-}
-
-/**
  * Format phone number for display
  */
 export function formatPhoneNumber(phoneNumber: string): string {
