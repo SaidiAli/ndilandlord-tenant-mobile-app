@@ -19,7 +19,8 @@ import {
 
 import * as Sentry from '@sentry/react-native';
 
-export const API_BASE_URL = 'https://dcgc8okokso0ko88cwwgogo0.aptusagency.com/api';
+export const API_BASE_URL = 'https://api.verit.tech/api';
+// export const API_BASE_URL = 'https://dcgc8okokso0ko88cwwgogo0.aptusagency.com/api';
 // export const API_BASE_URL = 'http://192.168.1.5:4000/api';
 
 // Create axios instance

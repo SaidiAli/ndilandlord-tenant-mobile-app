@@ -20,7 +20,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (userName: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateUser: (userData: UpdateUserRequest) => Promise<void>;
@@ -82,9 +82,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initAuth();
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = async (userName: string, password: string) => {
     try {
-      const response = await authApi.login({ username, password });
+      const response = await authApi.login({ userName, password });
 
       await secureStorage.setToken(response.token);
       await secureStorage.setUser(response.user);

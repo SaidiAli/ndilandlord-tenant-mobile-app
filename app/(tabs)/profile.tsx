@@ -1,12 +1,11 @@
 import { ScrollView, View, Text, TouchableOpacity, Switch, Alert, Linking } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { useSettings } from '../../hooks/useSettings';
 import { Card } from '../../components/ui/Card';
-
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
+import Constants from "expo-constants";
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
@@ -26,7 +25,7 @@ export default function ProfileScreen() {
   };
 
   const handleContactSupport = async () => {
-    const supportEmail = 'support@verit.com';
+    const supportEmail = 'support@verit.tech';
     const subject = 'Support Request - Verit App';
     const mailtoUrl = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}`;
 
@@ -100,6 +99,9 @@ export default function ProfileScreen() {
                 <View className="space-y-1 items-center">
                   <Text className="text-lg font-semibold text-gray-800">
                     {user.firstName} {user.lastName}
+                  </Text>
+                  <Text className="text-gray-600 text-sm">
+                    {user.phone ? user.phone : 'No Phone number'}
                   </Text>
                   <Text className="text-gray-600 text-sm">
                     {user.email ? user.email : 'No email'}
@@ -283,7 +285,7 @@ export default function ProfileScreen() {
                   Verit Tenant App
                 </Text>
                 <Text className="text-sm text-gray-500">
-                  Version 1.0.0
+                  {Constants.expoConfig?.version}
                 </Text>
               </View>
             </Card>

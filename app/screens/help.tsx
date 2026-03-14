@@ -69,7 +69,7 @@ export default function HelpScreen() {
   };
 
   const openWebsite = () => {
-    Linking.openURL('https://example.com');
+    Linking.openURL('https://verit.tech');
   };
 
   return (
@@ -111,11 +111,11 @@ export default function HelpScreen() {
               <Text className="text-lg font-semibold text-gray-800 mb-4">
                 Help Topics
               </Text>
-              <View className="space-y-3">
+              <View className="gap-3">
                 {helpTopics.map((topic) => (
                   <Card key={topic.id}>
                     <TouchableOpacity
-                      className="flex-row items-center space-x-3 active:opacity-70"
+                      className="flex-row items-center gap-3"
                       onPress={() => handleTopicPress(topic.id)}
                     >
                       <View className="w-10 h-10 bg-[#524768]/10 rounded-full items-center justify-center">
@@ -138,7 +138,7 @@ export default function HelpScreen() {
 
             {/* Contact Support */}
             <Card className="mb-4">
-              <View className="space-y-4 items-center">
+              <View className="gap-4 items-center">
                 <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center">
                   <MaterialIcons name="help-outline" size={28} color="#3B82F6" />
                 </View>
@@ -153,7 +153,7 @@ export default function HelpScreen() {
                 </View>
 
                 <TouchableOpacity
-                  className="bg-[#524768] px-6 py-3 rounded-md active:bg-[#254B3C]"
+                  className="bg-[#524768] px-6 py-3 rounded-md"
                   onPress={handleContactSupport}
                 >
                   <Text className="text-white font-medium">
@@ -172,7 +172,7 @@ export default function HelpScreen() {
 
                 <View className="space-y-2">
                   <Text className="text-gray-700">
-                    Maple Gardens Apartments
+                    Verit Property Management
                   </Text>
                   <Text className="text-gray-600 text-sm">
                     Your trusted property management team is here to help make your rental experience as smooth as possible.

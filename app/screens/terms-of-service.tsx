@@ -114,7 +114,7 @@ export default function TermsOfServiceScreen() {
                     10. Contact Information
                   </Text>
                   <Text className="text-gray-600 leading-6">
-                    If you have any questions about these Terms of Service, please contact us at support@verit.com
+                    If you have any questions about these Terms of Service, please contact us at support@verit.tech
                   </Text>
                 </View>
 

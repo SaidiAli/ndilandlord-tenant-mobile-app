@@ -87,13 +87,6 @@ export default function EditProfileScreen() {
                     {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
                   </Text>
                 </View>
-
-                <TouchableOpacity className="flex-row items-center gap-2">
-                  <MaterialIcons name="camera-alt" size={16} color="#524768" />
-                  <Text className="text-[#524768] font-medium">
-                    Change Photo
-                  </Text>
-                </TouchableOpacity>
               </View>
             </Card>
 

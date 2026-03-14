@@ -21,7 +21,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
 
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
+  userName: z.string().min(1, 'Username is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -51,7 +51,7 @@ export default function LoginScreen() {
     setIsLoading(true);
 
     try {
-      await login(data.username, data.password);
+      await login(data.userName, data.password);
     } catch (err: any) {
       let errorMessage = 'Login failed';
 
@@ -111,14 +111,14 @@ export default function LoginScreen() {
                     </Text>
                     <Controller
                       control={control}
-                      name="username"
+                      name="userName"
                       render={({ field: { onChange, onBlur, value } }) => (
                         <View className="relative">
                           <View className="absolute left-3 top-3 z-10">
                             <MaterialIcons name="person" size={20} color="#6B7280" />
                           </View>
                           <TextInput
-                            className={`w-full pl-12 pr-4 py-3 border rounded-md bg-white ${errors.username ? 'border-red-500' : 'border-gray-300'
+                            className={`w-full pl-12 pr-4 py-3 border rounded-md bg-white ${errors.userName ? 'border-red-500' : 'border-gray-300'
                               }`}
                             placeholder="Enter your username"
                             onBlur={onBlur}
@@ -130,9 +130,9 @@ export default function LoginScreen() {
                         </View>
                       )}
                     />
-                    {errors.username && (
+                    {errors.userName && (
                       <Text className="text-red-500 text-sm mt-1">
-                        {errors.username.message}
+                        {errors.userName.message}
                       </Text>
                     )}
                   </View>

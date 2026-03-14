@@ -6,7 +6,9 @@
       "Bash(npx tsc:*)",
       "Bash(ls:*)",
       "Bash(cd /c/Users/user/Desktop/code/verit/verit-tenant-mobile-app && npx expo install expo-file-system expo-sharing 2>&1)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

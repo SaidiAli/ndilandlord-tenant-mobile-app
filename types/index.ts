@@ -1,9 +1,8 @@
 // Shared types with backend (matching server schema)
 export interface User {
   id: string;
-  userName?: string; // Backend uses userName
-  username?: string; // For frontend compatibility
-  email?: string; // Optional in backend
+  userName?: string;
+  email?: string;
   firstName: string;
   lastName: string;
   phone?: string;
@@ -103,7 +102,7 @@ export interface ApiResponse<T = any> {
 
 // Auth types
 export interface LoginRequest {
-  username: string; // Frontend uses username
+  userName: string;
   password: string;
 }
 

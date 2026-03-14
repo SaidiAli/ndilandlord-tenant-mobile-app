@@ -106,7 +106,7 @@ export default function PropertyScreen() {
             {/* Emergency Contact */}
             {emergencyContacts && emergencyContacts.length > 0 && (
               <Card className="mb-4">
-                <View className="space-y-3">
+                <View className="gap-3">
                   <View className="flex-row justify-between items-center">
                     <Text className="text-lg font-semibold text-gray-800">
                       Emergency Contact
@@ -122,7 +122,7 @@ export default function PropertyScreen() {
                         </Text>
 
                         <TouchableOpacity
-                          className="bg-red-500 py-3 rounded-md flex-row items-center justify-center space-x-2 active:bg-red-600 mt-2"
+                          className="bg-red-500 py-3 rounded-md flex-row items-center justify-center space-x-2 mt-2"
                           onPress={() => handleEmergencyCall(contact.phone)}
                         >
                           <MaterialIcons name="phone" size={20} color="white" />
@@ -134,7 +134,7 @@ export default function PropertyScreen() {
                     ))}
 
                     <Text className="text-sm text-gray-600 text-center">
-                      For non-emergency maintenance requests, use the form below
+                      For emergencies only
                     </Text>
                   </View>
                 </View>
@@ -158,7 +158,7 @@ export default function PropertyScreen() {
 
             {/* Maintenance Request Form */}
             <Card className="mb-4">
-              <View className="space-y-3">
+              <View className="gap-3">
                 <Text className="text-lg font-semibold text-gray-800">
                   Submit Maintenance Request
                 </Text>
