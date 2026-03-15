@@ -50,8 +50,8 @@ export default function ChangePasswordScreen() {
 
     if (!formData.newPassword) {
       newErrors.newPassword = 'New password is required';
-    } else if (formData.newPassword.length < 6) {
-      newErrors.newPassword = 'Password must be at least 6 characters';
+    } else if (formData.newPassword.length < 8) {
+      newErrors.newPassword = 'Password must be at least 8 characters';
     }
 
     if (!formData.confirmPassword) {
@@ -87,8 +87,8 @@ export default function ChangePasswordScreen() {
 
   const getPasswordStrength = (password: string) => {
     if (password.length === 0) return { strength: 0, label: '' };
-    if (password.length < 6) return { strength: 1, label: 'Weak' };
-    if (password.length < 8) return { strength: 2, label: 'Fair' };
+    if (password.length < 8) return { strength: 1, label: 'Weak' };
+    if (password.length < 10) return { strength: 2, label: 'Fair' };
     if (password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
       return { strength: 4, label: 'Strong' };
     }
@@ -126,7 +126,7 @@ export default function ChangePasswordScreen() {
                   </Text>
                   <Text className="text-sm text-gray-600">
                     Choose a strong password that you haven't used before.
-                    Your password should be at least 6 characters long.
+                    Your password should be at least 8 characters long.
                   </Text>
                 </View>
               </View>

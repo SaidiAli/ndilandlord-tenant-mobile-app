@@ -39,7 +39,7 @@ export default function EditProfileScreen() {
 
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
 
@@ -84,7 +84,7 @@ export default function EditProfileScreen() {
               <View className="items-center space-y-4">
                 <View className="w-24 h-24 bg-[#524768] rounded-full items-center justify-center">
                   <Text className="text-white font-bold text-2xl">
-                    {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
+                    {formData.firstName?.charAt(0) ?? ''}{formData.lastName?.charAt(0) ?? ''}
                   </Text>
                 </View>
               </View>

@@ -2,9 +2,9 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Component, ReactNode } from 'react';
 import 'react-native-reanimated';
-import { Text, TextInput } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
@@ -27,6 +27,30 @@ import * as Sentry from '@sentry/react-native';
 
 SplashScreen.preventAutoHideAsync();
 
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error) {
+    Sentry.captureException(error);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Something went wrong</Text>
+          <Text style={{ color: '#6B7280', textAlign: 'center' }}>Please restart the app. If the problem persists, contact support.</Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // Apply Nunito Sans as the default font to all Text and TextInput components
 (Text as any).defaultProps = { ...((Text as any).defaultProps ?? {}), style: [{ fontFamily: 'NunitoSans_400Regular' }, (Text as any).defaultProps?.style] };
 (TextInput as any).defaultProps = { ...((TextInput as any).defaultProps ?? {}), style: [{ fontFamily: 'NunitoSans_400Regular' }, (TextInput as any).defaultProps?.style] };
@@ -36,7 +60,7 @@ Sentry.init({
 
   // Adds more context data to events (IP address, cookies, user, etc.)
   // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
-  sendDefaultPii: true,
+  sendDefaultPii: false,
 });
 
 export const unstable_settings = {
@@ -73,6 +97,7 @@ export default Sentry.wrap(function RootLayout() {
   );
 
   return (
+    <ErrorBoundary>
     <GluestackUIProvider mode="light">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
@@ -157,5 +182,6 @@ export default Sentry.wrap(function RootLayout() {
         </AuthProvider>
       </QueryClientProvider>
     </GluestackUIProvider>
+    </ErrorBoundary>
   );
 });

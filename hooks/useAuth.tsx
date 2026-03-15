@@ -56,18 +56,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUser(currentUser);
             await secureStorage.setUser(currentUser); // Update stored user data
           } catch (error: any) {
-            console.error('Auth verification failed:', error);
             // Only logout if it's explicitly an authentication error (401)
             // or if the user data is actually missing (404)
             if (error.response?.status === 401 || error.response?.status === 404 || error.message?.includes('User not found')) {
-              console.log('Token expired or invalid, logging out');
               await logout();
             }
             // For network errors (500, timeout, etc), we stay logged in (offline mode)
           }
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
         // Only clear is absolutely necessary
         const token = await secureStorage.getToken();
         if (!token) {

@@ -92,7 +92,7 @@ export default function ProfileScreen() {
               <View className="space-y-4 items-center">
                 <View className="w-20 h-20 bg-[#524768] rounded-full items-center justify-center">
                   <Text className="text-white font-bold text-xl">
-                    {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                    {user.firstName?.charAt(0) ?? ''}{user.lastName?.charAt(0) ?? ''}
                   </Text>
                 </View>
 

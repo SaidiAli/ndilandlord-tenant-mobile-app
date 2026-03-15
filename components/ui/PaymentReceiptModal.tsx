@@ -45,7 +45,6 @@ export function PaymentReceiptModal({
         dialogTitle: 'Share Receipt PDF',
       });
     } catch (error: any) {
-      console.log({ error })
       Alert.alert('Error', 'Failed to download receipt PDF');
     } finally {
       setIsDownloading(false);
