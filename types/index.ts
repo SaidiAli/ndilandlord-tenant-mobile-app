@@ -102,7 +102,7 @@ export interface ApiResponse<T = any> {
 
 // Auth types
 export interface LoginRequest {
-  userName: string;
+  username: string;
   password: string;
 }
 
