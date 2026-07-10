@@ -9,7 +9,7 @@ import { ErrorView } from '../../components/ui/ErrorView';
 import { useLease } from '../../hooks/LeaseContext';
 import { paymentApi } from '../../lib/api';
 import { PaymentScheduleItem } from '../../types';
-import { formatUGX } from '../../lib/currency';
+import { formatMoney } from '../../lib/currency';
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
 import { formatDateShort } from '@/lib/utils';
 
@@ -176,7 +176,10 @@ export default function PaymentScheduleScreen() {
           <View className="flex-row justify-between items-center">
             <Text className="text-gray-600">Amount</Text>
             <Text className="text-lg font-bold text-gray-800">
-              {formatUGX(item.paidAmount < item.amount ? item.amount - item.paidAmount : item.amount)}
+              {formatMoney(
+                item.paidAmount < item.amount ? item.amount - item.paidAmount : item.amount,
+                item.currency,
+              )}
             </Text>
           </View>
           <View className="flex-row items-center gap-2">
@@ -189,7 +192,7 @@ export default function PaymentScheduleScreen() {
             <View className="mt-2">
               <View className="flex-row justify-between items-center mb-1">
                 <Text className="text-xs text-gray-500">
-                  Paid: {formatUGX(item.paidAmount)}
+                  Paid: {formatMoney(item.paidAmount, item.currency)}
                 </Text>
                 <Text className="text-xs text-gray-500">
                   {Math.round(progressPercent)}%
@@ -238,7 +241,9 @@ export default function PaymentScheduleScreen() {
                       <MaterialIcons name="history" size={18} color="#EF4444" />
                       <Text className="text-red-600">Historical Arrears</Text>
                     </View>
-                    <Text className="font-semibold text-red-600">{formatUGX(arrearsAmount)}</Text>
+                    <Text className="font-semibold text-red-600">
+                      {formatMoney(arrearsAmount, schedule[0]?.currency)}
+                    </Text>
                   </View>
                 )}
                 {currentDueAmount > 0 && (
@@ -247,7 +252,9 @@ export default function PaymentScheduleScreen() {
                       <MaterialIcons name="event" size={18} color="#F59E0B" />
                       <Text className="text-yellow-600">Current Due</Text>
                     </View>
-                    <Text className="font-semibold text-yellow-600">{formatUGX(currentDueAmount)}</Text>
+                    <Text className="font-semibold text-yellow-600">
+                      {formatMoney(currentDueAmount, schedule[0]?.currency)}
+                    </Text>
                   </View>
                 )}
                 {overdueCount > 0 && (

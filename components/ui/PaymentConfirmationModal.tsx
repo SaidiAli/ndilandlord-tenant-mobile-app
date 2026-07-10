@@ -12,17 +12,19 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Card } from "./Card";
 import { LoadingSpinner } from "./LoadingSpinner";
 import {
-  formatUGX,
+  formatMoney,
   formatPhoneNumber,
   normalizePhoneNumber,
   getMobileMoneyProvider,
 } from "../../lib/currency";
+import type { Currency } from "../../types";
 
 interface PaymentConfirmationModalProps {
   visible: boolean;
   onClose: () => void;
   onConfirm: (phoneNumber: string) => void;
   amount: number;
+  currency: Currency;
   phoneNumber: string;
   providerName: string;
   isLoading?: boolean;
@@ -34,6 +36,7 @@ export function PaymentConfirmationModal({
   onClose,
   onConfirm,
   amount,
+  currency,
   phoneNumber,
   providerName: initialProviderName,
   isLoading = false,
@@ -108,7 +111,7 @@ export function PaymentConfirmationModal({
 
                 <View className="items-center gap-2 w-full">
                   <Text className="text-xl font-bold text-gray-800">
-                    {formatUGX(amount)}
+                    {formatMoney(amount, currency)}
                   </Text>
                   <Text className="text-gray-600">via {derivedProvider}</Text>
 

@@ -1,37 +1,43 @@
-/**
- * Currency formatting utilities for Ugandan Shilling (UGX)
- */
+import type { Currency } from '../types';
 
-/**
- * Format number as UGX currency
- */
-export function formatUGX(amount: number): string {
-  if (isNaN(amount)) return 'UGX 0';
+export const MOBILE_MONEY_UNAVAILABLE_MESSAGE =
+  'This lease is billed in USD. Please arrange payment with your landlord directly (bank transfer / cash) — mobile money is not available for USD.';
 
-  return new Intl.NumberFormat('en-UG', {
+/** Format an amount using the lease's currency. */
+export function formatMoney(amount: number | string, currency: Currency = 'UGX'): string {
+  const normalizedCurrency: Currency = currency === 'USD' ? 'USD' : 'UGX';
+  const numericAmount = typeof amount === 'string' ? Number(amount) : amount;
+  if (!Number.isFinite(numericAmount)) {
+    return normalizedCurrency === 'USD' ? 'USD 0.00' : 'UGX 0';
+  }
+
+  const fractionDigits = normalizedCurrency === 'USD' ? 2 : 0;
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'UGX',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount).replace('USh', 'UGX');
+    currency: normalizedCurrency,
+    currencyDisplay: 'code',
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(numericAmount).replace(/\u00a0/g, ' ');
 }
 
-/**
- * Format number as compact UGX (e.g., 16.8M instead of 16,800,000)
- */
-export function formatCompactUGX(amount: number): string {
-  if (isNaN(amount)) return 'UGX 0';
+/** Format an amount compactly using the lease's currency. */
+export function formatCompactMoney(amount: number | string, currency: Currency = 'UGX'): string {
+  const normalizedCurrency: Currency = currency === 'USD' ? 'USD' : 'UGX';
+  const numericAmount = typeof amount === 'string' ? Number(amount) : amount;
+  if (!Number.isFinite(numericAmount)) {
+    return normalizedCurrency === 'USD' ? 'USD 0.00' : 'UGX 0';
+  }
 
-  const formatter = new Intl.NumberFormat('en-UG', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'UGX',
+    currency: normalizedCurrency,
+    currencyDisplay: 'code',
     notation: 'compact',
     compactDisplay: 'short',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 1,
-  });
-
-  return formatter.format(amount).replace('USh', 'UGX');
+    minimumFractionDigits: normalizedCurrency === 'USD' ? 2 : 0,
+    maximumFractionDigits: normalizedCurrency === 'USD' ? 2 : 1,
+  }).format(numericAmount).replace(/\u00a0/g, ' ');
 }
 
 /**
@@ -47,12 +53,11 @@ export function formatNumber(amount: number): string {
 }
 
 /**
- * Parse UGX string back to number
+ * Parse a formatted money string back to a number.
  */
-export function parseUGX(ugxString: string): number {
-  // Remove currency symbols and spaces
-  const cleanString = ugxString
-    .replace(/UGX|USh/gi, '')
+export function parseMoney(moneyString: string): number {
+  const cleanString = moneyString
+    .replace(/UGX|USD|USh|\$/gi, '')
     .replace(/[,\s]/g, '')
     .trim();
 
@@ -61,10 +66,11 @@ export function parseUGX(ugxString: string): number {
 }
 
 /**
- * Validate UGX amount input
+ * Validate a payment amount.
  */
-export function validateUGXAmount(
+export function validatePaymentAmount(
   amount: number,
+  currency: Currency,
   minAmount: number = 10000,
   maxAmount?: number
 ): { isValid: boolean; error?: string } {
@@ -75,14 +81,14 @@ export function validateUGXAmount(
   if (amount < minAmount) {
     return {
       isValid: false,
-      error: `Minimum payment amount is ${formatUGX(minAmount)}`
+      error: `Minimum payment amount is ${formatMoney(minAmount, currency)}`
     };
   }
 
   if (maxAmount && amount > maxAmount) {
     return {
       isValid: false,
-      error: `Maximum payment amount is ${formatUGX(maxAmount)}`
+      error: `Maximum payment amount is ${formatMoney(maxAmount, currency)}`
     };
   }
 

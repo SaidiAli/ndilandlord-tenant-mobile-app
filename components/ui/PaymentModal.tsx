@@ -14,10 +14,11 @@ import { Card } from "./Card";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PaymentBalance } from "../../types";
 import {
-  formatUGX,
-  parseUGX,
-  validateUGXAmount,
+  formatMoney,
+  parseMoney,
+  validatePaymentAmount,
   formatNumber,
+  MOBILE_MONEY_UNAVAILABLE_MESSAGE,
 } from "../../lib/currency";
 
 interface PaymentAmountModalProps {
@@ -51,7 +52,7 @@ export function PaymentModal({
     const cleanText = text.replace(/[^\d,\s]/g, "");
 
     // Parse the amount
-    const numericValue = parseUGX(cleanText);
+    const numericValue = parseMoney(cleanText);
 
     // Update state
     setAmount(formatNumber(numericValue));
@@ -59,10 +60,15 @@ export function PaymentModal({
   };
 
   const handleConfirm = () => {
-    const numericAmount = parseUGX(amount);
+    if (balance.currency !== "UGX") {
+      setError(MOBILE_MONEY_UNAVAILABLE_MESSAGE);
+      return;
+    }
+
+    const numericAmount = parseMoney(amount);
 
     // Validate amount
-    const validation = validateUGXAmount(numericAmount, 10000);
+    const validation = validatePaymentAmount(numericAmount, balance.currency, 10000);
 
     if (!validation.isValid) {
       setError(validation.error || "Invalid amount");
@@ -75,7 +81,7 @@ export function PaymentModal({
 
   const remainingBalance = Math.max(
     0,
-    balance.outstandingBalance - parseUGX(amount),
+    balance.outstandingBalance - parseMoney(amount),
   );
 
   return (
@@ -111,11 +117,11 @@ export function PaymentModal({
                   Outstanding Balance
                 </Text>
                 <Text className="text-3xl font-bold text-brand">
-                  {formatUGX(balance.outstandingBalance)}
+                  {formatMoney(balance.outstandingBalance, balance.currency)}
                 </Text>
                 <View className="flex-row justify-between text-sm text-gray-600">
-                  <Text>Monthly Rent: {formatUGX(balance.monthlyRent)}</Text>
-                  <Text>Paid: {formatUGX(balance.paidAmount)}</Text>
+                  <Text>Monthly Rent: {formatMoney(balance.monthlyRent, balance.currency)}</Text>
+                  <Text>Paid: {formatMoney(balance.paidAmount, balance.currency)}</Text>
                 </View>
               </View>
             </Card>
@@ -129,7 +135,7 @@ export function PaymentModal({
 
                 <View className="relative">
                   <Text className="absolute left-3 top-3 text-lg text-gray-500 z-10">
-                    UGX
+                    {balance.currency}
                   </Text>
                   <TextInput
                     value={amount}
@@ -153,7 +159,7 @@ export function PaymentModal({
                   <View className="bg-blue-50 p-3 rounded-md">
                     <Text className="text-blue-800 text-sm">
                       Remaining balance after payment:{" "}
-                      {formatUGX(remainingBalance)}
+                      {formatMoney(remainingBalance, balance.currency)}
                     </Text>
                   </View>
                 )}

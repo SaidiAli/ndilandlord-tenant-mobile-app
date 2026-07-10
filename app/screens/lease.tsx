@@ -13,6 +13,7 @@ import { useLease } from '../../hooks/LeaseContext';
 import { LeaseSwitcher } from '../../components/ui/LeaseSwitcher';
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
 import { File, Paths } from 'expo-file-system';
+import { formatMoney } from '../../lib/currency';
 
 export default function LeaseScreen() {
   const { selectedLeaseId } = useLease();
@@ -262,13 +263,13 @@ export default function LeaseScreen() {
                   <View className="flex-row justify-between">
                     <Text className="text-gray-600">Monthly Rent:</Text>
                     <Text className="text-lg font-bold text-brand">
-                      UGX {lease.monthlyRent.toLocaleString()}
+                      {formatMoney(lease.monthlyRent, lease.currency)}
                     </Text>
                   </View>
                   <View className="flex-row justify-between">
                     <Text className="text-gray-600">Security Deposit:</Text>
                     <Text className="font-medium text-gray-800">
-                      UGX {lease.deposit.toLocaleString()}
+                      {formatMoney(lease.deposit, lease.currency)}
                     </Text>
                   </View>
                 </View>

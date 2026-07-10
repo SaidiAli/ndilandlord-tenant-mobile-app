@@ -28,7 +28,8 @@ import {
   PaymentFlowState,
 } from "../../types";
 import {
-  formatUGX,
+  formatMoney,
+  MOBILE_MONEY_UNAVAILABLE_MESSAGE,
   normalizePhoneNumber,
   getMobileMoneyProvider,
 } from "../../lib/currency";
@@ -100,6 +101,8 @@ export default function PaymentsScreen() {
       } else if (err.message?.includes("Phone number")) {
         errorMessage =
           "Invalid phone number. Please check your mobile money number.";
+      } else if (err.message?.toLowerCase().includes("mobile money supports ugx only")) {
+        errorMessage = MOBILE_MONEY_UNAVAILABLE_MESSAGE;
       } else if (err.message) {
         errorMessage = err.message;
       }
@@ -129,13 +132,18 @@ export default function PaymentsScreen() {
   );
 
   const handlePayNow = useCallback(() => {
-    if (!balance) return;
+    if (!balance || balance.currency !== "UGX") return;
     setPaymentFlow({ step: "amount-selection", isLoading: false });
   }, [balance]);
 
   const handleAmountConfirm = useCallback(
     async (amount: number) => {
-      if (!balance || !selectedLeaseId) {
+      if (!balance || balance.currency !== "UGX") {
+        Alert.alert("Payment unavailable", MOBILE_MONEY_UNAVAILABLE_MESSAGE);
+        return;
+      }
+
+      if (!selectedLeaseId) {
         Alert.alert(
           "Error",
           "Payment information not available. Please try again.",
@@ -217,7 +225,12 @@ export default function PaymentsScreen() {
       const { amount, phoneNumber, paymentMethod } = paymentFlow;
       const effectivePhoneNumber = confirmedPhoneNumber || phoneNumber;
 
-      if (!balance || !amount || !effectivePhoneNumber || !selectedLeaseId) {
+      if (!balance || balance.currency !== "UGX") {
+        Alert.alert("Payment unavailable", MOBILE_MONEY_UNAVAILABLE_MESSAGE);
+        return;
+      }
+
+      if (!amount || !effectivePhoneNumber || !selectedLeaseId) {
         Alert.alert("Error", "Missing payment information. Please try again.");
         return;
       }
@@ -365,6 +378,7 @@ export default function PaymentsScreen() {
                 <PaymentStatusTracker
                   transactionId={currentPayment.transactionId}
                   amount={currentPayment.amount}
+                  currency={currentPayment.currency}
                   onSuccess={handlePaymentSuccess}
                   onFailed={handlePaymentFailed}
                   onTimeout={handlePaymentTimeout}
@@ -395,7 +409,7 @@ export default function PaymentsScreen() {
                     Payment Successful!
                   </Text>
                   <Text className="text-green-700 text-center">
-                    Your payment of {formatUGX(currentPayment.amount)} has been
+                    Your payment of {formatMoney(currentPayment.amount, currentPayment.currency)} has been
                     processed successfully.
                   </Text>
                   <TouchableOpacity
@@ -451,11 +465,11 @@ export default function PaymentsScreen() {
 
                   <View className="space-y-2">
                     <Text className="text-3xl font-bold text-brand">
-                      {formatUGX(balance.outstandingBalance)}
+                      {formatMoney(balance.outstandingBalance, balance.currency)}
                     </Text>
                     <View className="flex-row justify-between">
                       <Text className="text-gray-600 text-sm">
-                        Monthly Rent: {formatUGX(balance.monthlyRent)}
+                        Monthly Rent: {formatMoney(balance.monthlyRent, balance.currency)}
                       </Text>
                     </View>
                     <Text className="text-gray-600 text-sm">
@@ -468,26 +482,35 @@ export default function PaymentsScreen() {
                     )}
                   </View>
 
-                  <TouchableOpacity
-                    className="bg-brand py-3 rounded-md items-center flex-row justify-center space-x-2 mt-8"
-                    onPress={handlePayNow}
-                    disabled={paymentFlow.step !== "idle"}
-                  >
-                    <Text className="text-white font-medium text-lg">
-                      Pay Now
-                    </Text>
-                  </TouchableOpacity>
+                  {balance.currency === "UGX" ? (
+                    <TouchableOpacity
+                      className="bg-brand py-3 rounded-md items-center flex-row justify-center space-x-2 mt-8"
+                      onPress={handlePayNow}
+                      disabled={paymentFlow.step !== "idle"}
+                    >
+                      <Text className="text-white font-medium text-lg">
+                        Pay with mobile money
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View className="bg-blue-50 border border-blue-200 rounded-md p-3 mt-8">
+                      <Text className="text-blue-900 text-sm leading-5">
+                        {MOBILE_MONEY_UNAVAILABLE_MESSAGE}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </Card>
             )}
 
             {/* Payment Methods Card */}
-            <Card className="mb-4">
+            {balance && <Card className="mb-4">
               <View className="space-y-3">
                 <Text className="text-lg font-semibold text-gray-800 mb-4">
                   Payment Methods
                 </Text>
 
+                {balance.currency === "UGX" ? <>
                 <View className="flex-row items-center justify-between py-2 px-2 mb-2 rounded-md bg-yellow-50 border border-yellow-200">
                   <View className="flex-row items-center gap-2">
                     <MaterialIcons
@@ -525,8 +548,13 @@ export default function PaymentsScreen() {
                   </View>
                   <MaterialIcons name="verified" size={20} color="#10B981" />
                 </View>
+                </> : (
+                  <Text className="text-gray-600 text-sm leading-5">
+                    {MOBILE_MONEY_UNAVAILABLE_MESSAGE}
+                  </Text>
+                )}
               </View>
-            </Card>
+            </Card>}
 
             {/* Payment Schedule Link */}
             <TouchableOpacity
@@ -599,7 +627,7 @@ export default function PaymentsScreen() {
         </ScrollView>
 
         {/* Payment Amount Modal */}
-        {balance && (
+        {balance && balance.currency === "UGX" && (
           <PaymentModal
             visible={paymentFlow.step === "amount-selection"}
             onClose={closePaymentFlow}
@@ -610,12 +638,15 @@ export default function PaymentsScreen() {
         )}
 
         {/* Payment Confirmation Modal */}
-        {paymentFlow.paymentMethod && paymentFlow.phoneNumber && (
+        {balance?.currency === "UGX" &&
+          paymentFlow.paymentMethod &&
+          paymentFlow.phoneNumber && (
           <PaymentConfirmationModal
             visible={paymentFlow.step === "confirmation"}
             onClose={closePaymentFlow}
             onConfirm={handlePaymentConfirm}
             amount={paymentFlow.amount || 0}
+            currency={balance?.currency || "UGX"}
             phoneNumber={paymentFlow.phoneNumber}
             providerName={paymentFlow.paymentMethod.displayName}
             isLoading={paymentFlow.isLoading}

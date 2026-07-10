@@ -21,7 +21,7 @@ import {
 } from "../../components/ui/StatusBadge";
 import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
 import { ErrorView } from "../../components/ui/ErrorView";
-import { formatUGX } from "../../lib/currency";
+import { formatMoney } from "../../lib/currency";
 import { tenantApi } from "../../lib/api";
 
 import { SafeAreaWrapper } from "../../components/ui/SafeAreaWrapper";
@@ -98,7 +98,10 @@ export default function DashboardScreen() {
                   title="Monthly Rent"
                   value={
                     dashboardData?.lease
-                      ? formatUGX(dashboardData.lease.monthlyRent)
+                      ? formatMoney(
+                          dashboardData.lease.monthlyRent,
+                          dashboardData.lease.currency,
+                        )
                       : "Loading..."
                   }
                   subtitle={""}
@@ -109,7 +112,10 @@ export default function DashboardScreen() {
                   title="Outstanding balance"
                   value={
                     dashboardData
-                      ? formatUGX(dashboardData.payments.currentBalance)
+                      ? formatMoney(
+                          dashboardData.payments.currentBalance,
+                          dashboardData.payments.currency,
+                        )
                       : "Loading..."
                   }
                   subtitle={
@@ -133,7 +139,10 @@ export default function DashboardScreen() {
                   <View className="flex-row justify-between items-center">
                     <View>
                       <Text className="text-2xl font-bold text-gray-800">
-                        {formatUGX(dashboardData.payments.currentBalance)}
+                        {formatMoney(
+                          dashboardData.payments.currentBalance,
+                          dashboardData.payments.currency,
+                        )}
                       </Text>
                       {dashboardData.payments.nextDueDate && (
                         <Text className="text-gray-600 text-sm">
@@ -214,10 +223,11 @@ export default function DashboardScreen() {
                             <View className="flex-row justify-between items-center">
                               <View>
                                 <Text className="font-medium text-gray-800">
-                                  {formatUGX(
+                                  {formatMoney(
                                     typeof payment.amount === "string"
                                       ? parseFloat(payment.amount)
                                       : payment.amount,
+                                    payment.currency,
                                   )}
                                 </Text>
                                 <Text className="text-gray-600 text-sm">

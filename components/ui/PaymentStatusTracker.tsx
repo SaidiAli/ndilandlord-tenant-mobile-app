@@ -5,12 +5,13 @@ import { Card } from './Card';
 import { LoadingSpinner } from './LoadingSpinner';
 import { usePaymentStatus } from '../../hooks/usePaymentStatus';
 import { usePaymentSocket } from '../../hooks/usePaymentSocket';
-import { PaymentStatusResponse } from '../../types';
-import { formatUGX } from '../../lib/currency';
+import { Currency, PaymentStatusResponse } from '../../types';
+import { formatMoney } from '../../lib/currency';
 
 interface PaymentStatusTrackerProps {
   transactionId: string;
   amount: number;
+  currency: Currency;
   onSuccess: (status: PaymentStatusResponse) => void;
   onFailed: (status: PaymentStatusResponse) => void;
   onTimeout: () => void;
@@ -20,6 +21,7 @@ interface PaymentStatusTrackerProps {
 export function PaymentStatusTracker({
   transactionId,
   amount,
+  currency,
   onSuccess,
   onFailed,
   onTimeout,
@@ -192,7 +194,7 @@ export function PaymentStatusTracker({
           {/* Amount */}
           <View className="bg-gray-50 px-4 py-2 rounded-md">
             <Text className="text-lg font-semibold text-gray-800">
-              {formatUGX(amount)}
+              {formatMoney(status?.amount ?? amount, status?.currency ?? currency)}
             </Text>
           </View>
 

@@ -1,12 +1,14 @@
 import { useEffect, useRef } from 'react';
 import type { Socket } from 'socket.io-client';
 import { acquireSocket, releaseSocket } from '../lib/socket';
+import type { Currency } from '../types';
 
 export interface PaymentUpdateEvent {
   paymentId: string;
   leaseId: string;
   transactionId: string | null;
   status: 'completed' | 'failed' | 'pending';
+  currency: Currency;
 }
 
 /**

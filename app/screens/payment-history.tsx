@@ -10,7 +10,7 @@ import { PaymentReceiptModal } from '../../components/ui/PaymentReceiptModal';
 import { ErrorView } from '../../components/ui/ErrorView';
 import { useLease } from '../../hooks/LeaseContext';
 import { paymentApi } from '../../lib/api';
-import { formatUGX } from '../../lib/currency';
+import { formatMoney } from '../../lib/currency';
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
 import { formatDateShort } from '@/lib/utils';
 import { PAYMENT_TYPE_LABELS } from '../../types';
@@ -152,7 +152,10 @@ export default function PaymentHistoryScreen() {
 
                               <View className="items-end space-y-1">
                                 <Text className="text-lg font-bold text-gray-800">
-                                  {formatUGX(typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount)}
+                                  {formatMoney(
+                                    typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount,
+                                    payment.currency,
+                                  )}
                                 </Text>
                                 <StatusBadge {...getPaymentStatusBadge(payment.status)} />
                               </View>

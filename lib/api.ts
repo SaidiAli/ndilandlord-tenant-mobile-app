@@ -456,6 +456,7 @@ export const tenantApi = {
           endDate: data.lease.endDate,
           monthlyRent: data.lease.monthlyRent,
           deposit: data.lease.deposit,
+          currency: data.lease.currency,
           status: data.lease.status as 'draft' | 'active' | 'expired' | 'terminated',
           terms: data.lease.terms,
           createdAt: new Date().toISOString(),

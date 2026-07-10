@@ -1,4 +1,6 @@
 // Shared types with backend (matching server schema)
+export type Currency = 'UGX' | 'USD';
+
 export interface User {
   id: string;
   userName?: string;
@@ -50,6 +52,7 @@ export interface Lease {
   endDate: string;
   monthlyRent: number;
   deposit: number;
+  currency: Currency;
   status: 'draft' | 'active' | 'expired' | 'terminated';
   terms?: string;
   createdAt: string;
@@ -73,6 +76,7 @@ export interface Payment {
   id: string;
   leaseId: string;
   amount: number;
+  currency: Currency;
   dueDate?: string;
   paidDate?: string;
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
@@ -218,6 +222,7 @@ export interface LeaseApiResponse {
   unitNumber: string;
   status: 'active' | 'draft' | 'expired' | 'terminated';
   createdAt: string;
+  currency: Currency;
 }
 
 // Transformation utility to convert backend response to frontend Lease type
@@ -233,6 +238,7 @@ export function transformLeaseResponse(response: LeaseApiResponse): Lease {
     endDate: response.endDate || '',
     monthlyRent: parseFloat(response.monthlyRent),
     deposit: 0, // Not provided in list response
+    currency: response.currency,
     status: response.status,
     terms: '', // Not provided
     createdAt: response.createdAt,
@@ -284,6 +290,7 @@ export interface TenantDashboardData {
     endDate: string;
     monthlyRent: number;
     deposit: number;
+    currency: Currency;
     status: string;
     terms?: string;
   } | null;
@@ -305,13 +312,14 @@ export interface TenantDashboardData {
     description?: string;
   } | null;
   payments: {
+    currency: Currency;
     currentBalance: number;
     nextDueDate?: string;
     isOverdue: boolean;
     minimumPayment: number;
     recentPayments: Array<{
-      payment: any;
-      lease: any;
+      payment: Payment;
+      lease: Lease;
       tenant: any;
     }>;
   };
@@ -331,6 +339,7 @@ export interface TenantDashboardData {
 // Payment System Types
 export interface PaymentBalance {
   leaseId: string;
+  currency: Currency;
   monthlyRent: number;
   paidAmount: number;
   outstandingBalance: number;
@@ -352,6 +361,7 @@ export interface PaymentInitiationResponse {
   paymentId: string;
   transactionId: string;
   amount: number;
+  currency: Currency;
   status: 'pending' | 'processing';
   gateway: 'yo' | 'iotec';
   gatewayReference: string;
@@ -367,6 +377,7 @@ export interface PaymentStatusResponse {
   paymentStatus: 'pending' | 'completed' | 'failed';
   message: string;
   amount: number;
+  currency: Currency;
   mnoReference?: string;
   gateway: string;
   processedAt?: string;
@@ -377,7 +388,7 @@ export interface PaymentReceipt {
   paymentId: string;
   transactionId: string;
   amount: number;
-  currency: 'UGX';
+  currency: Currency;
   paymentType?: PaymentType;
   paymentMethod: string;
   paidDate: string;
@@ -389,6 +400,7 @@ export interface PaymentReceipt {
   lease: {
     id: string;
     monthlyRent: number;
+    currency: Currency;
     startDate: string;
     endDate?: string | null;
   } | null;
@@ -400,6 +412,7 @@ export interface PaymentReceipt {
     paymentNumber: number;
     amountApplied: number;
     scheduledAmount: number;
+    currency: Currency;
     period: string;
   }> | null;
   companyInfo: {
@@ -519,6 +532,7 @@ export interface PaymentScheduleItem {
   paymentNumber: number;
   dueDate: string;
   amount: number;
+  currency: Currency;
   periodStart: string;
   periodEnd: string;
   isPaid: boolean;

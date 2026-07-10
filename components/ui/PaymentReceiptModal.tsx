@@ -15,7 +15,7 @@ import { Card } from "./Card";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { paymentApi, API_BASE_URL } from "../../lib/api";
 import { secureStorage } from "../../lib/storage";
-import { formatUGX } from "../../lib/currency";
+import { formatMoney } from "../../lib/currency";
 import { File, Paths } from "expo-file-system";
 import { formatDateShort, formatSchedulePeriod } from "@/lib/utils";
 import { PAYMENT_TYPE_LABELS } from "../../types";
@@ -75,7 +75,7 @@ export function PaymentReceiptModal({
 Verit - Payment Receipt
 
 Receipt #: ${receipt.receiptNumber}
-Amount: ${formatUGX(receipt.amount)}
+Amount: ${formatMoney(receipt.amount, receipt.currency)}
 Payment Type: ${PAYMENT_TYPE_LABELS[receipt.paymentType ?? "rent"]}
 Payment Method: ${receipt.paymentMethod}
 Periods: ${receipt.appliedSchedules?.length ? receipt.appliedSchedules.map((s) => `#${s.paymentNumber} ${formatSchedulePeriod(s.period)}`).join(", ") : receipt.periodCovered || (receipt.dueDate ? formatDateShort(receipt.dueDate) : "N/A")}
@@ -180,7 +180,7 @@ Thank you for your payment!
                     <View className="flex-row justify-between">
                       <Text className="text-gray-600">Amount Paid:</Text>
                       <Text className="font-bold text-lg text-gray-800">
-                        {formatUGX(receipt.amount)}
+                        {formatMoney(receipt.amount, receipt.currency)}
                       </Text>
                     </View>
 
@@ -222,10 +222,10 @@ Thank you for your payment!
                             </View>
                             <View className="items-end">
                               <Text className="font-medium text-gray-800">
-                                {formatUGX(schedule.amountApplied)}
+                                {formatMoney(schedule.amountApplied, schedule.currency)}
                               </Text>
                               <Text className="text-xs text-gray-500">
-                                of {formatUGX(schedule.scheduledAmount)}
+                                of {formatMoney(schedule.scheduledAmount, schedule.currency)}
                               </Text>
                             </View>
                           </View>
@@ -294,7 +294,7 @@ Thank you for your payment!
                         <View className="flex-row justify-between">
                           <Text className="text-gray-600">Monthly Rent:</Text>
                           <Text className="font-medium text-gray-800">
-                            {formatUGX(receipt.lease.monthlyRent)}
+                            {formatMoney(receipt.lease.monthlyRent, receipt.lease.currency)}
                           </Text>
                         </View>
                         <View className="flex-row justify-between">
