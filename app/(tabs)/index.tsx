@@ -7,7 +7,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
@@ -46,6 +46,19 @@ export default function DashboardScreen() {
     useCallback(() => {
       refetch();
     }, [refetch]),
+  );
+
+  // `currentBalance` is scoped to the payable currency. Any further bucket is another
+  // currency owed on the lease (old-currency arrears after a rent-currency transition) —
+  // disclose it rather than fold it in, since the two can't be added.
+  const otherCurrencyOwed = useMemo(
+    () =>
+      (dashboardData?.payments.balances ?? [])
+        .slice(1)
+        .filter(bucket => bucket.outstandingBalance > 0)
+        .map(bucket => formatMoney(bucket.outstandingBalance, bucket.currency))
+        .join(" + "),
+    [dashboardData?.payments.balances],
   );
 
   if (!user) {
@@ -119,7 +132,12 @@ export default function DashboardScreen() {
                       : "Loading..."
                   }
                   subtitle={
-                    dashboardData?.payments.isOverdue ? "Overdue" : "On Track"
+                    [
+                      dashboardData?.payments.isOverdue ? "Overdue" : "On Track",
+                      otherCurrencyOwed && `+ ${otherCurrencyOwed} owed`,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")
                   }
                   variant="danger"
                   className="flex-1"

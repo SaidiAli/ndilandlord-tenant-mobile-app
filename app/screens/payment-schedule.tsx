@@ -8,7 +8,7 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { ErrorView } from '../../components/ui/ErrorView';
 import { useLease } from '../../hooks/LeaseContext';
 import { paymentApi } from '../../lib/api';
-import { PaymentScheduleItem } from '../../types';
+import { Currency, PaymentScheduleItem } from '../../types';
 import { formatMoney } from '../../lib/currency';
 import { SafeAreaWrapper } from '../../components/ui/SafeAreaWrapper';
 import { formatDateShort } from '@/lib/utils';
@@ -67,17 +67,25 @@ export default function PaymentScheduleScreen() {
   const {
     historicalSchedules,
     currentAndFutureSchedules,
-    arrearsAmount,
-    currentDueAmount,
+    arrearsTotals,
+    currentDueTotals,
     overdueCount,
     nextDueItem,
     hasBackdatedLease,
   } = useMemo(() => {
     const historical: PaymentScheduleItem[] = [];
     const currentFuture: PaymentScheduleItem[] = [];
-    let arrears = 0;
-    let currentDue = 0;
+    // A lease can hold schedules in more than one currency: a rent-currency transition only
+    // re-stamps unpaid schedules whose period has not started, so older periods keep the old
+    // currency. Never sum across currencies — total per currency and render one row each.
+    const arrears = new Map<Currency, number>();
+    const currentDue = new Map<Currency, number>();
     let overdueCnt = 0;
+
+    const addTo = (totals: Map<Currency, number>, item: PaymentScheduleItem) => {
+      const currency: Currency = item.currency === 'USD' ? 'USD' : 'UGX';
+      totals.set(currency, (totals.get(currency) ?? 0) + (item.amount - item.paidAmount));
+    };
 
     for (const item of schedule) {
       const periodEnd = new Date(item.periodEnd);
@@ -86,12 +94,12 @@ export default function PaymentScheduleScreen() {
       if (periodEnd < currentMonthStart) {
         historical.push(item);
         if (isOutstanding) {
-          arrears += item.amount - item.paidAmount;
+          addTo(arrears, item);
         }
       } else {
         currentFuture.push(item);
         if (isOutstanding) {
-          currentDue += item.amount - item.paidAmount;
+          addTo(currentDue, item);
         }
       }
       if (item.status === 'overdue') {
@@ -99,14 +107,19 @@ export default function PaymentScheduleScreen() {
       }
     }
 
+    const toTotals = (totals: Map<Currency, number>) =>
+      [...totals.entries()]
+        .filter(([, amount]) => amount > 0)
+        .map(([currency, amount]) => ({ currency, amount }));
+
     const nextDue = currentFuture.find(item => item.status === 'pending' || item.status === 'upcoming');
     const hasBackdated = historical.length > 3;
 
     return {
       historicalSchedules: historical,
       currentAndFutureSchedules: currentFuture,
-      arrearsAmount: arrears,
-      currentDueAmount: currentDue,
+      arrearsTotals: toTotals(arrears),
+      currentDueTotals: toTotals(currentDue),
       overdueCount: overdueCnt,
       nextDueItem: nextDue,
       hasBackdatedLease: hasBackdated,
@@ -235,28 +248,32 @@ export default function PaymentScheduleScreen() {
                 <Text className="text-lg font-semibold text-gray-800 mb-2">
                   Balance Breakdown
                 </Text>
-                {arrearsAmount > 0 && (
-                  <View className="flex-row justify-between items-center">
+                {arrearsTotals.map(({ currency, amount }) => (
+                  <View key={`arrears-${currency}`} className="flex-row justify-between items-center">
                     <View className="flex-row items-center gap-2">
                       <MaterialIcons name="history" size={18} color="#EF4444" />
-                      <Text className="text-red-600">Historical Arrears</Text>
+                      <Text className="text-red-600">
+                        Historical Arrears{arrearsTotals.length > 1 ? ` (${currency})` : ''}
+                      </Text>
                     </View>
                     <Text className="font-semibold text-red-600">
-                      {formatMoney(arrearsAmount, schedule[0]?.currency)}
+                      {formatMoney(amount, currency)}
                     </Text>
                   </View>
-                )}
-                {currentDueAmount > 0 && (
-                  <View className="flex-row justify-between items-center">
+                ))}
+                {currentDueTotals.map(({ currency, amount }) => (
+                  <View key={`current-${currency}`} className="flex-row justify-between items-center">
                     <View className="flex-row items-center gap-2">
                       <MaterialIcons name="event" size={18} color="#F59E0B" />
-                      <Text className="text-yellow-600">Current Due</Text>
+                      <Text className="text-yellow-600">
+                        Current Due{currentDueTotals.length > 1 ? ` (${currency})` : ''}
+                      </Text>
                     </View>
                     <Text className="font-semibold text-yellow-600">
-                      {formatMoney(currentDueAmount, schedule[0]?.currency)}
+                      {formatMoney(amount, currency)}
                     </Text>
                   </View>
-                )}
+                ))}
                 {overdueCount > 0 && (
                   <View className="flex-row justify-between items-center">
                     <Text className="text-gray-600">Overdue Periods</Text>
@@ -271,7 +288,7 @@ export default function PaymentScheduleScreen() {
                     </Text>
                   </View>
                 )}
-                {arrearsAmount === 0 && currentDueAmount === 0 && (
+                {arrearsTotals.length === 0 && currentDueTotals.length === 0 && (
                   <Text className="text-green-600 text-center py-2">
                     All payments are up to date
                   </Text>

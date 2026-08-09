@@ -117,6 +117,8 @@ export interface MaintenanceRequest {
   scheduledDate: string | null;
   assignedAt: string | null;
   // Money is returned as decimal strings; parseFloat before display.
+  // Always UGX — maintenance costs feed the auto-expense and expenses are UGX-only
+  // (business rule). Never format these with the lease/property currency.
   estimatedCost: string | null;
   actualCost: string | null;
   submittedAt: string;
@@ -312,9 +314,12 @@ export interface TenantDashboardData {
     description?: string;
   } | null;
   payments: {
-    currency: Currency;
+    /** Scoped to the payable currency. Absent when there is no lease or the balance lookup failed. */
+    currency?: Currency;
+    /** Every currency on the lease; `[]` when no balance could be computed. */
+    balances: CurrencyBalance[];
     currentBalance: number;
-    nextDueDate?: string;
+    nextDueDate?: string | null;
     isOverdue: boolean;
     minimumPayment: number;
     recentPayments: Array<{
@@ -337,14 +342,37 @@ export interface TenantDashboardData {
 }
 
 // Payment System Types
-export interface PaymentBalance {
-  leaseId: string;
+
+/**
+ * One currency's slice of a lease balance. A rent-currency transition only re-stamps unpaid
+ * schedules whose period has not started, so a lease can owe old-currency arrears *and*
+ * new-currency rent at the same time. Never sum across buckets.
+ */
+export interface CurrencyBalance {
   currency: Currency;
-  monthlyRent: number;
   paidAmount: number;
   outstandingBalance: number;
   minimumPayment: number;
-  dueDate: string;
+  /** Next unpaid schedule in *this* currency; null when the bucket is fully paid. */
+  dueDate: string | null;
+  nextPaymentDue?: string;
+  isOverdue: boolean;
+}
+
+export interface PaymentBalance {
+  leaseId: string;
+  /** What a payment will actually be billed in. Mobile-money gating keys on this. */
+  currency: Currency;
+  /** One entry per currency on the lease; `balances[0].currency === currency`. */
+  balances: CurrencyBalance[];
+  monthlyRent: number;
+  /** The lease's current rent currency — differs from `currency` on an arrears-only lease. */
+  monthlyRentCurrency: Currency;
+  // Flat mirror of balances[0]. Deprecated server-side; scoped to one currency, never a mixed sum.
+  paidAmount: number;
+  outstandingBalance: number;
+  minimumPayment: number;
+  dueDate: string | null;
   isOverdue: boolean;
   nextPaymentDue?: string;
 }

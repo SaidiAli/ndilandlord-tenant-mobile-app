@@ -120,7 +120,9 @@ export function PaymentModal({
                   {formatMoney(balance.outstandingBalance, balance.currency)}
                 </Text>
                 <View className="flex-row justify-between text-sm text-gray-600">
-                  <Text>Monthly Rent: {formatMoney(balance.monthlyRent, balance.currency)}</Text>
+                  {/* Rent is denominated in the lease's rent currency, which is not the
+                      payable currency on an arrears-only lease. */}
+                  <Text>Monthly Rent: {formatMoney(balance.monthlyRent, balance.monthlyRentCurrency)}</Text>
                   <Text>Paid: {formatMoney(balance.paidAmount, balance.currency)}</Text>
                 </View>
               </View>

@@ -1,5 +1,5 @@
 import { BRAND_COLOR } from "@/constants/theme";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   ScrollView,
   View,
@@ -23,6 +23,7 @@ import { useLease } from "../../hooks/LeaseContext";
 import { paymentApi } from "../../lib/api";
 import { ErrorView } from "../../components/ui/ErrorView";
 import {
+  CurrencyBalance,
   PaymentInitiationResponse,
   PaymentStatusResponse,
   PaymentFlowState,
@@ -113,6 +114,28 @@ export default function PaymentsScreen() {
       }));
     },
   });
+
+  // `balances[0]` is the payable bucket and mirrors the flat fields; the rest are other
+  // currencies still owed on the lease (old-currency arrears after a rent-currency
+  // transition). Fall back to the flat fields so an older server still renders.
+  const { primaryBalance, otherBalances } = useMemo(() => {
+    if (!balance) return { primaryBalance: null, otherBalances: [] as CurrencyBalance[] };
+    const buckets = balance.balances?.length
+      ? balance.balances
+      : [{
+          currency: balance.currency,
+          paidAmount: balance.paidAmount,
+          outstandingBalance: balance.outstandingBalance,
+          minimumPayment: balance.minimumPayment,
+          dueDate: balance.dueDate,
+          nextPaymentDue: balance.nextPaymentDue,
+          isOverdue: balance.isOverdue,
+        }];
+    return {
+      primaryBalance: buckets[0],
+      otherBalances: buckets.slice(1).filter(b => b.outstandingBalance > 0),
+    };
+  }, [balance]);
 
   const isRefreshing = isBalanceRefetching || isPaymentsRefetching;
 
@@ -454,7 +477,7 @@ export default function PaymentsScreen() {
             )}
 
             {/* Current Balance Card */}
-            {balance && (
+            {balance && primaryBalance && (
               <Card className="mb-4">
                 <View className="space-y-4">
                   <View className="flex-row justify-between items-center mb-4">
@@ -465,17 +488,31 @@ export default function PaymentsScreen() {
 
                   <View className="space-y-2">
                     <Text className="text-3xl font-bold text-brand">
-                      {formatMoney(balance.outstandingBalance, balance.currency)}
+                      {formatMoney(primaryBalance.outstandingBalance, primaryBalance.currency)}
                     </Text>
+                    {/* A transitioned lease also owes its old currency. Shown separately —
+                        summing across currencies would be meaningless. */}
+                    {otherBalances.map((bucket) => (
+                      <View key={bucket.currency} className="flex-row items-center gap-2">
+                        <Text className="text-gray-800 text-base font-semibold">
+                          + {formatMoney(bucket.outstandingBalance, bucket.currency)}
+                        </Text>
+                        <Text className="text-gray-500 text-xs">
+                          {bucket.currency} arrears{bucket.isOverdue ? ' · overdue' : ''}
+                        </Text>
+                      </View>
+                    ))}
                     <View className="flex-row justify-between">
                       <Text className="text-gray-600 text-sm">
-                        Monthly Rent: {formatMoney(balance.monthlyRent, balance.currency)}
+                        Monthly Rent: {formatMoney(balance.monthlyRent, balance.monthlyRentCurrency)}
                       </Text>
                     </View>
-                    <Text className="text-gray-600 text-sm">
-                      Next Due: {formatDateShort(balance.dueDate)}
-                    </Text>
-                    {balance.isOverdue && (
+                    {primaryBalance.dueDate && (
+                      <Text className="text-gray-600 text-sm">
+                        Next Due: {formatDateShort(primaryBalance.dueDate)}
+                      </Text>
+                    )}
+                    {primaryBalance.isOverdue && (
                       <Text className="text-yellow-600 text-sm font-medium">
                         ⚠️ Payment is overdue
                       </Text>

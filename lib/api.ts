@@ -276,6 +276,14 @@ export const paymentApi = {
         throw new Error(response.data.error || 'Failed to get payment balance');
       }
 
+      // The payload is cast, not validated. A server that omits `currency` silently regresses
+      // mobile money to "unavailable" for every lease, UGX included — loud in dev only.
+      if (__DEV__ && !response.data.data.currency) {
+        console.warn(
+          '[getBalance] server returned no `currency`; mobile money will be hidden on all leases',
+        );
+      }
+
       return response.data.data;
     } catch (error: any) {
       if (error.response?.status === 404) {
