@@ -94,7 +94,7 @@ export default function ProfileScreen() {
           <View className="px-4 pt-6 pb-4">
             {/* Header */}
             <Text className="text-2xl font-semibold text-gray-800 mb-6">
-              Profile
+              Profile Settings
             </Text>
 
             {/* User Info Card */}
@@ -288,16 +288,6 @@ export default function ProfileScreen() {
               </View>
             </Card>
 
-            {/* App Info */}
-            <Card className="mb-4">
-              <View className="space-y-2 items-center">
-                <Text className="text-sm text-gray-500">Verit Tenant App</Text>
-                <Text className="text-sm text-gray-500">
-                  {Constants.expoConfig?.version}
-                </Text>
-              </View>
-            </Card>
-
             {/* Logout */}
             <Card className="mb-6">
               <TouchableOpacity
@@ -310,6 +300,16 @@ export default function ProfileScreen() {
                 </View>
               </TouchableOpacity>
             </Card>
+
+            {/* App Info */}
+            <View className="mb-4">
+              <View className="space-y-2 items-center">
+                <Text className="text-sm text-gray-500">Verit Tenant App</Text>
+                <Text className="text-sm text-gray-500">
+                  {Constants.expoConfig?.version}
+                </Text>
+              </View>
+            </View>
           </View>
         </ScrollView>
       </View>
