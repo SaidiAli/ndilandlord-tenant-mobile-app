@@ -215,6 +215,16 @@ export default function LoginScreen() {
                       Forgot Password?
                     </Text>
                   </TouchableOpacity>
+
+                  {/* New tenant activation */}
+                  <TouchableOpacity
+                    onPress={() => router.push('/(auth)/activate')}
+                    className="self-center mt-2"
+                  >
+                    <Text className="text-brand text-sm font-medium">
+                      New tenant? Activate your account
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>

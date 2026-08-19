@@ -215,6 +215,13 @@ export interface AuthResponse {
   token: string;
 }
 
+// Tenant phone+OTP self-activation (landlord-provisioned tenant sets their own username/password)
+export interface TenantActivateRequest {
+  phone: string;
+  userName: string;
+  password: string;
+}
+
 export interface LeaseApiResponse {
   id: string;
   startDate: string;

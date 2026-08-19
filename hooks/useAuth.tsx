@@ -23,6 +23,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (userName: string, password: string) => Promise<void>;
+  activate: (phone: string, userName: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateUser: (userData: UpdateUserRequest) => Promise<void>;
@@ -118,6 +119,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const activate = async (phone: string, userName: string, password: string) => {
+    try {
+      const response = await authApi.activateTenant({ phone, userName, password });
+
+      await secureStorage.setToken(response.token);
+      await secureStorage.setUser(response.user);
+      setUser(response.user);
+
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
   const logout = async () => {
     // Do the credential-clearing first so a future throw in socket teardown
     // can't leave the user half-logged-out.
@@ -160,6 +175,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isLoading,
     isAuthenticated,
     login,
+    activate,
     logout,
     refreshUser,
     updateUser,

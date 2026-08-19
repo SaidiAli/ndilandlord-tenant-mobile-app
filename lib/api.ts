@@ -4,6 +4,7 @@ import {
   ApiResponse,
   AuthResponse,
   LoginRequest,
+  TenantActivateRequest,
   User,
   PaymentBalance,
   PaymentInitiationRequest,
@@ -31,11 +32,6 @@ import {
 
 import * as Sentry from '@sentry/react-native';
 
-// `EXPO_PUBLIC_API_URL` is inlined into the bundle at build time (it is not read
-// at runtime). If it is missing — e.g. the bundle was built without a `.env`, or
-// the var wasn't exported to EAS — every request would otherwise silently fall
-// back to a relative URL and `lib/socket.ts` would crash on `undefined.replace`.
-// Fail loudly here instead so the cause is obvious.
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL;
 if (!apiBaseUrl) {
   throw new Error(
@@ -259,6 +255,71 @@ export const authApi = {
         throw new Error(error.response.data?.error || 'Invalid password data');
       }
       throw new Error(error.message || 'Failed to reset password');
+    }
+  },
+
+  /**
+   * Tenant phone+OTP self-activation — a landlord creates the tenant shell with no credentials;
+   * the tenant verifies their phone here, then picks a username/password in `activateTenant`.
+   */
+  requestTenantOtp: async (phone: string): Promise<void> => {
+    try {
+      const response = await api.post<ApiResponse<{ message: string }>>('/auth/tenant/request-otp', { phone });
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to send verification code');
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        throw new Error(error.response.data?.error || 'No account found for this phone number.');
+      } else if (error.response?.status === 409) {
+        throw new Error(error.response.data?.error || 'This account is already activated.');
+      } else if (error.response?.status === 429) {
+        throw new Error(error.response.data?.error || 'Please wait before requesting another code.');
+      } else if (error.response?.status === 400) {
+        throw new Error(error.response.data?.error || 'Invalid phone number');
+      }
+      throw new Error(error.message || 'Failed to send verification code');
+    }
+  },
+
+  verifyTenantOtp: async (phone: string, otp: string): Promise<void> => {
+    try {
+      const response = await api.post<ApiResponse<{ message: string }>>('/auth/tenant/verify-otp', { phone, otp });
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Invalid verification code');
+      }
+    } catch (error: any) {
+      const status = error.response?.status;
+      if (status === 429) {
+        const err = new Error(
+          error.response.data?.error || 'Too many failed attempts. Please request a new code.',
+        );
+        (err as any).status = 429;
+        throw err;
+      }
+      if (status === 400) {
+        throw new Error(error.response.data?.error || 'Invalid verification code');
+      }
+      throw new Error(error.message || 'Failed to verify code');
+    }
+  },
+
+  activateTenant: async (data: TenantActivateRequest): Promise<AuthResponse> => {
+    try {
+      const response = await api.post<ApiResponse<AuthResponse>>('/auth/tenant/activate', data);
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error || 'Failed to activate account');
+      }
+      return response.data.data;
+    } catch (error: any) {
+      if (error.response?.status === 409) {
+        throw new Error(error.response.data?.error || 'This username is already taken.');
+      } else if (error.response?.status === 400) {
+        throw new Error(error.response.data?.error || 'Please verify your phone number first.');
+      } else if (error.response?.status === 404) {
+        throw new Error(error.response.data?.error || 'No account found for this phone number.');
+      }
+      throw new Error(error.message || 'Failed to activate account');
     }
   },
 };
